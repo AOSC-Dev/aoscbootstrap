@@ -252,7 +252,8 @@ sub chroot_do($@) {
     }
     system( 'systemd-run', '-M', "$aoscbootstrap::target_env_name",
         "--pty", "--wait", @cmd ) == 0
-      or die("Command failed when executing in nspawn: $cmd[0]\n");
+      or ( chroot_exit()
+        && die("Command failed when executing in nspawn: $cmd[0]\n") );
 }
 
 sub chroot_script_do($$) {
@@ -354,6 +355,11 @@ sub add_packages_from_file($$) {
     print STDERR "Added additional packages from $filename\n";
 }
 
+sub chroot_exit() {
+    system( 'machinectl', 'poweroff', "$aoscbootstrap::target_env_name" )
+      if $aoscbootstrap::target_env_name;
+}
+
 # configurations
 my $default_mirror = 'https://repo.aosc.io/debs';
 my $default_branch = 'stable';
@@ -448,7 +454,6 @@ my $script = generate_dpkg_install_script(@all_deps);
 chroot_script_do( $target, $script );
 print STDERR "Installing skeleton scripts for root user...\n";
 chroot_do( "$target", '/bin/cp', '-rT', '/etc/skel', '/root' );
-system( 'machinectl', 'poweroff', "$aoscbootstrap::target_env_name" )
-  if $aoscbootstrap::target_env_name;
+chroot_exit();
 print STDERR "================================\n";
 print STDERR "Base system setup complete.\n";
