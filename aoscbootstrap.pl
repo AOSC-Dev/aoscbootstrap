@@ -113,7 +113,7 @@ sub resolve_packages($) {
     my @resolve_packages;
     foreach my $p (@packages) {
         my %r = find_package_complete( $p, @manifests );
-        die "Package $p not found" unless %r;
+        die "Package $p not found" unless %r{'filename'};
         push @resolve_packages, \%r;
         my @r_deps = find_package_depends(%r);
 
@@ -143,6 +143,23 @@ sub fetch_manifests($) {
     return @manifests_location;
 }
 
+sub fetch_packages_aria2($$@) {
+    my $mirror     = shift;
+    my $target     = shift;
+    my (@packages) = @_;
+    my $cache_dir  = "$target/var/cache/apt/archives/";
+    my ( $fh, $filename ) = tempfile( "ab-XXXXXX", SUFFIX => '.lst', DIR => '/tmp/' )
+      or die("Cannot create temporary file");
+    for my $dep (@packages) {
+        my %pkg = %$dep;
+        print $fh
+"$mirror/$pkg{'filename'}\n dir=$cache_dir\n checksum=sha-256=$pkg{'sha'}\n allow-overwrite=true\n";
+    }
+    close $fh;
+    system( 'aria2c', '-V', '-i', $filename ) == 0
+      or die("Cannot download packages using aria2");
+}
+
 sub fetch_packages($$@) {
     my $mirror     = shift;
     my $target     = shift;
@@ -150,6 +167,8 @@ sub fetch_packages($$@) {
     my $count      = 0;
     my $length     = scalar @packages;
     my $cache_dir  = "$target/var/cache/apt/archives/partial/";
+    return fetch_packages_aria2( $mirror, $target, @packages )
+      if system( ( "which", "aria2c" ) ) == 0;
     for my $dep (@packages) {
         $count++;
         my %pkg = %$dep;
