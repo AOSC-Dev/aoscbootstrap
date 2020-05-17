@@ -368,7 +368,7 @@ sub add_packages_from_file($$) {
     open( my $fh, '<', $filename ) or die "Could not open $filename";
     while (<$fh>) {
         my $name = $_ =~ s/^\s+|\s+$//gr;
-        push @{$packages_ref}, $name;
+        push @{$packages_ref}, $name if $name;
     }
     close($fh);
     print STDERR "Added additional packages from $filename\n";
