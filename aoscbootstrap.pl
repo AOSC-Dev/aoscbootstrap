@@ -192,6 +192,12 @@ sub detect_extractor() {
     return undef;
 }
 
+sub detect_container_system() {
+    return "nspawn" if system( ( "which", "systemd-nspawn" ) ) == 0;
+    return "chroot" if system( ( "which", "chroot" ) ) == 0;
+    return undef;
+}
+
 sub extract_deb($$) {
     my $from      = shift;
     my $to        = shift;
@@ -219,11 +225,34 @@ sub extract_packages($) {
     }
 }
 
+sub create_nspawn($$) {
+    my $target = shift;
+    my $name   = shift;
+    if (fork) {
+        `systemd-nspawn -bD '$target' -M '$name'`;
+        exit 0;
+    }
+    else {
+        sleep 1;
+    }
+}
+
 sub chroot_do($@) {
     my $target = shift;
     my @cmd    = @_;
-    system( 'chroot', "$target", @cmd ) == 0
-      or die("Command failed when executing in chroot: $cmd[0]\n");
+    if ( $aoscbootstrap::target_env eq 'chroot' ) {
+        system( 'chroot', "$target", @cmd ) == 0
+          or die("Command failed when executing in chroot: $cmd[0]\n");
+        return;
+    }
+    if ( not $aoscbootstrap::target_env_name ) {
+        my $name = sprintf( '%s-%s', basename($target), time() );
+        create_nspawn( $target, $name );
+        $aoscbootstrap::target_env_name = $name;
+    }
+    system( 'systemd-run', '-M', "$aoscbootstrap::target_env_name",
+        "--pty", "--wait", @cmd ) == 0
+      or die("Command failed when executing in nspawn: $cmd[0]\n");
 }
 
 sub chroot_script_do($$) {
@@ -395,7 +424,9 @@ print STDERR "Dowloading extra files...\n";
 `curl -q 'https://repo.aosc.io/aosc-repacks/etc-bootstrap.tar.xz' | tar xJf - -C "$target"`;
 $? == 0 or die "Failed to download extra files\n";
 
-our $extractor = detect_extractor();
+our $extractor       = detect_extractor();
+our $target_env      = detect_container_system();
+our $target_env_name = '';                          # container name if any
 make_path($target) unless -d $target;
 my %args_3 = (
     'manifests' => \@manifests,
@@ -417,5 +448,7 @@ my $script = generate_dpkg_install_script(@all_deps);
 chroot_script_do( $target, $script );
 print STDERR "Installing skeleton scripts for root user...\n";
 chroot_do( "$target", '/bin/cp', '-rT', '/etc/skel', '/root' );
+system( 'machinectl', 'poweroff', "$aoscbootstrap::target_env_name" )
+  if $aoscbootstrap::target_env_name;
 print STDERR "================================\n";
 print STDERR "Base system setup complete.\n";
