@@ -252,7 +252,7 @@ sub create_nspawn($$) {
         exit 0;
     }
     else {
-        sleep 1;
+        sleep 3;
     }
 }
 
