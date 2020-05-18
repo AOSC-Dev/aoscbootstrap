@@ -148,7 +148,8 @@ sub fetch_packages_aria2($$@) {
     my $target     = shift;
     my (@packages) = @_;
     my $cache_dir  = "$target/var/cache/apt/archives/";
-    my ( $fh, $filename ) = tempfile( "ab-XXXXXX", SUFFIX => '.lst', DIR => '/tmp/' )
+    my ( $fh, $filename ) =
+      tempfile( "ab-XXXXXX", SUFFIX => '.lst', DIR => '/tmp/' )
       or die("Cannot create temporary file");
     for my $dep (@packages) {
         my %pkg = %$dep;
@@ -252,7 +253,8 @@ sub create_nspawn($$) {
         exit 0;
     }
     else {
-        sleep 3;
+        system( 'systemctl', 'is-system-running', '--wait', '-M', $name ) == 0
+          or die "Failed to wait for container to start\n";
     }
 }
 
