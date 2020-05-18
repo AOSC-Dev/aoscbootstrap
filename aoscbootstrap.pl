@@ -245,16 +245,29 @@ sub extract_packages($) {
     }
 }
 
+sub wait_for_nspawn($) {
+    my $name  = shift;
+    my $count = 0;
+    print STDERR "Waiting for container to boot...\n";
+    while ( $count <= 10 ) {
+        return
+          if system( 'systemctl', 'is-system-running', '--wait', '-M', $name )
+          == 0;
+        $count++;
+        sleep 1;
+    }
+    chroot_exit() && die "Failed to wait for container to start\n";
+}
+
 sub create_nspawn($$) {
     my $target = shift;
     my $name   = shift;
     if (fork) {
-        `systemd-nspawn -bD '$target' -M '$name'`;
+        `systemd-nspawn --notify-ready=yes -bD '$target' -M '$name'`;
         exit 0;
     }
     else {
-        system( 'systemctl', 'is-system-running', '--wait', '-M', $name ) == 0
-          or die "Failed to wait for container to start\n";
+        wait_for_nspawn($name);
     }
 }
 
