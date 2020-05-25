@@ -372,10 +372,11 @@ sub generate_dpkg_install_script(@) {
     print $fh
 "  dpkg --force-depends --unpack \"/var/cache/apt/archives/\${p}\"\ndone\n";
     print $fh "count_c=1
+length_c=\$(dpkg -l | grep -c 'iU')
 function dpkg_progress () {
     while read action step package; do
 if [ \"\$action\" = 'processing:' -a \"\$step\" = 'configure:' ]; then
-echo \"[\$count_c/\$length] Configuring \$package...\";count_c=\$(( \$count_c + 1 ))
+echo \"[\$count_c/\$length_c] Configuring \$package...\";count_c=\$(( \$count_c + 1 ))
 fi
     done
 }\n";
