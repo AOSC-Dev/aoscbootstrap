@@ -371,8 +371,16 @@ sub generate_dpkg_install_script(@) {
     print $fh "  echo \"[\$count/\$length] Installing \${p}...\"\n";
     print $fh
 "  dpkg --force-depends --unpack \"/var/cache/apt/archives/\${p}\"\ndone\n";
+    print $fh "count_c=1
+function dpkg_progress () {
+    while read action step package; do
+if [ \"\$action\" = 'processing:' -a \"\$step\" = 'configure:' ]; then
+echo \"[\$count_c/\$length] Configuring \$package...\";count_c=\$(( \$count_c + 1 ))
+fi
+    done
+}\n";
     print $fh
-      "dpkg --configure --pending --force-configure-any --force-depends\n";
+"{ dpkg --status-fd=7 --configure --pending --force-configure-any --force-depends 7>&1 >&8 | dpkg_progress; } 8>&1\n";
     close($fh);
     return $script;
 }
