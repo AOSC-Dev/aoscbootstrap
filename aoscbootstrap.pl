@@ -274,13 +274,18 @@ sub create_nspawn($$) {
 sub chroot_do($@) {
     my $target = shift;
     my @cmd    = @_;
+    my $suffix = time();
+    my $buffer = '';
+    if ( open(FH, "/dev/urandom") && read(FH, $test, 4) ) {
+        $suffix = unpack("H*", $test);
+    }
     if ( $aoscbootstrap::target_env eq 'chroot' ) {
         system( 'chroot', "$target", @cmd ) == 0
           or die("Command failed when executing in chroot: $cmd[0]\n");
         return;
     }
     if ( not $aoscbootstrap::target_env_name ) {
-        my $name = sprintf( '%s-%s', basename($target), time() );
+        my $name = sprintf( '%s-%s', basename($target), $suffix );
         create_nspawn( $target, $name );
         $aoscbootstrap::target_env_name = $name;
     }
@@ -491,7 +496,8 @@ print STDERR "Stage 1 finished.\n";
 print STDERR "================================\n";
 print STDERR "Setting default passwords...\n";
 chroot_do( "$target", "/bin/true" );
-`echo 'root:anthon' | chpasswd -R '$target'`;
+chroot_do( "$target", "/bin/bash", "-c", "echo 'root:anthon' | chpasswd" );
+system( "sync" ) == 0 or die "Failed to sync()";
 print STDERR "Installing packages for stage 2...\n";
 my $script = generate_dpkg_install_script(@all_deps);
 chroot_script_do( $target, $script );
