@@ -276,8 +276,8 @@ sub chroot_do($@) {
     my @cmd    = @_;
     my $suffix = time();
     my $buffer = '';
-    if ( open(FH, "/dev/urandom") && read(FH, $test, 4) ) {
-        $suffix = unpack("H*", $test);
+    if ( open(FH, "/dev/urandom") && read(FH, $buffer, 4) ) {
+        $suffix = unpack("H*", $buffer);
     }
     if ( $aoscbootstrap::target_env eq 'chroot' ) {
         system( 'chroot', "$target", @cmd ) == 0
