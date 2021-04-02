@@ -1,0 +1,30 @@
+[package]
+name = "aoscbootstrap"
+version = "0.1.0"
+authors = ["liushuyu <liushuyu011@gmail.com>"]
+edition = "2018"
+
+
+[dependencies]
+reqwest = { version = "0.11", features = ["blocking"] }
+serde = { version = "1.0", features = ["derive"] }
+rand = "0.8"
+which = "4.1"
+toml = "0.5"
+ar = "0.8"
+tar = "0.4"
+clap = "2.33"
+anyhow = "1.0"
+nix = "0.20"
+sha2 = "0.9"
+rayon = "1.5"
+libloading = "0.7"
+libsolv-sys = "0.1"
+libc = "0.2"
+url = "2.2"
+hex = "0.4"
+xz2 = "0.1"
+tempfile = "3.2"
+
+[profile.release]
+lto = "fat"
