@@ -13,7 +13,7 @@ pub struct PackageMeta {
 }
 
 /// Simulate the apt dependency resolution
-pub fn calculate_deps(pool: &mut Pool, names: &[String]) -> Result<Vec<PackageMeta>> {
+pub fn calculate_deps(pool: &mut Pool, names: &[String]) -> Result<Transaction> {
     let mut q = Queue::new();
     for name in names {
         q = pool.match_package(name, q)?;
@@ -25,7 +25,7 @@ pub fn calculate_deps(pool: &mut Pool, names: &[String]) -> Result<Vec<PackageMe
     let trans = solver.create_transaction()?;
     trans.order(0);
 
-    Ok(trans.create_metadata()?)
+    Ok(trans)
 }
 
 /// Populate the packages pool with metadata

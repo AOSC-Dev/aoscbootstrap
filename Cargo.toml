@@ -25,6 +25,7 @@ url = "2.2"
 hex = "0.4"
 xz2 = "0.1"
 tempfile = "3.2"
+bytesize = "1.0"
 
 [profile.release]
 lto = "fat"
