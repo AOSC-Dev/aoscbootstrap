@@ -112,13 +112,14 @@ fn main() {
     let mut arches = matches.values_of("arch").unwrap().collect::<Vec<&str>>();
     let config_path = matches.value_of("config").unwrap();
     let dl_only = matches.is_present("download-only");
-    let s1_only = matches.is_present("stage1-only");
+    let s1_only = matches.is_present("stage1");
     let clean_up = matches.is_present("clean");
     let extra_packages = matches.values_of("include");
     let extra_files = matches.values_of("include-files");
     let extra_scripts = matches.values_of("scripts");
     let config = install::read_config(config_path).unwrap();
     let client = network::make_new_client().unwrap();
+    let comps = matches.values_of("comps");
     let target_path = Path::new(target);
     let archive_path = target_path.join("var/cache/apt/archives");
     if target_path.exists() {
@@ -141,12 +142,18 @@ fn main() {
     if !arches.contains(&"all") {
         arches.push("all");
     }
+    let mut comps = if let Some(comps) = comps {
+        comps.collect::<Vec<&str>>()
+    } else {
+        Vec::new()
+    };
+    comps.push("main");
 
     std::fs::create_dir_all(target_path.join("var/lib/apt/lists")).unwrap();
     std::fs::create_dir_all(&archive_path).unwrap();
     eprintln!("Downloading manifests ...");
     let manifests =
-        network::fetch_manifests(&client, mirror, branch, &arches, target_path).unwrap();
+        network::fetch_manifests(&client, mirror, branch, &arches, &comps, target_path).unwrap();
     let mut paths = Vec::new();
     for p in manifests {
         paths.push(target_path.join("var/lib/apt/lists").join(p));
@@ -189,7 +196,10 @@ fn main() {
     if s1_only {
         let (_, path) = script.keep().unwrap();
         eprintln!("Stage 1 finished.");
-        eprintln!("If you want to continue stage 2, you can run `bash {:?}` inside the container.", path.file_name().unwrap());
+        eprintln!(
+            "If you want to continue stage 2, you can run `bash {:?}` inside the container.",
+            path.file_name().unwrap()
+        );
         return;
     }
 

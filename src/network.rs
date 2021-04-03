@@ -32,29 +32,48 @@ pub fn fetch_url(client: &Client, url: &str, path: &Path) -> Result<()> {
     Ok(())
 }
 
+#[inline]
+fn combination<'a, 'b>(a: &'a [&str], b: &'b [&str]) -> Vec<(&'a str, &'b str)> {
+    let mut ret = Vec::new();
+    for i in a {
+        for j in b {
+            ret.push((*i, *j));
+        }
+    }
+
+    ret
+}
+
 pub fn fetch_manifests(
     client: &Client,
     mirror: &str,
     branch: &str,
     arches: &[&str],
+    comps: &[&str],
     root: &Path,
 ) -> Result<Vec<String>> {
     let manifests = Arc::new(Mutex::new(Vec::new()));
     let manifests_clone = manifests.clone();
-    arches.par_iter().try_for_each(move |arch| -> Result<()> {
-        let url = format!("{}/dists/{}/main/binary-{}/Packages", mirror, branch, arch);
-        let parsed = Url::parse(&url)?;
-        let manifest_name = parsed.host_str().unwrap_or_default().to_string() + parsed.path();
-        let manifest_name = manifest_name.replace('/', "_");
-        fetch_url(
-            client,
-            &url,
-            &root.join("var/lib/apt/lists").join(manifest_name.clone()),
-        )?;
-        manifests_clone.lock().unwrap().push(manifest_name);
+    let combined = combination(arches, comps);
+    combined
+        .par_iter()
+        .try_for_each(move |(arch, comp)| -> Result<()> {
+            let url = format!(
+                "{}/dists/{}/{}/binary-{}/Packages",
+                mirror, branch, comp, arch
+            );
+            let parsed = Url::parse(&url)?;
+            let manifest_name = parsed.host_str().unwrap_or_default().to_string() + parsed.path();
+            let manifest_name = manifest_name.replace('/', "_");
+            fetch_url(
+                client,
+                &url,
+                &root.join("var/lib/apt/lists").join(manifest_name.clone()),
+            )?;
+            manifests_clone.lock().unwrap().push(manifest_name);
 
-        Ok(())
-    })?;
+            Ok(())
+        })?;
 
     Ok(Arc::try_unwrap(manifests).unwrap().into_inner().unwrap())
 }

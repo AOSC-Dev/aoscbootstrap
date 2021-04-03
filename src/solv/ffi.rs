@@ -240,13 +240,6 @@ impl Solver {
 
         Ok(())
     }
-
-    pub fn print_problems(&self) {
-        let count = unsafe { ffi::solver_problem_count(self.solver) };
-        for i in 0..count {
-            unsafe { ffi::solver_printprobleminfo(self.solver, (i + 1).try_into().unwrap()) };
-        }
-    }
 }
 
 impl Drop for Solver {

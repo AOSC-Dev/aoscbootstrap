@@ -69,6 +69,13 @@ pub fn build_cli() -> App<'static, 'static> {
                 .help("Only finishes stage 1, do not progress further"),
         )
         .arg(
+            Arg::with_name("comps")
+                .short("-m")
+                .takes_value(true)
+                .min_values(1)
+                .help("Add additional components"),
+        )
+        .arg(
             Arg::with_name("BRANCH")
                 .required(true)
                 .help("Branch to use"),
