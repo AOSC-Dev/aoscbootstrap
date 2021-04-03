@@ -1,4 +1,5 @@
 #!/bin/bash
+set -eo pipefail
 echo 'Setting up password ...'
 echo 'root:anthon' | chpasswd
 count=0
