@@ -25,3 +25,5 @@ fi
 || { echo 'Configuring missed packages ...'; dpkg --configure -a; }
 echo 'Copying skeleton files ...'
 cp -rvT /etc/skel /root
+echo 'Enabling systemd vendor presets ...'
+systemctl preset-all
