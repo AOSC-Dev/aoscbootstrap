@@ -13,28 +13,7 @@ use toml;
 use xz2::read::XzDecoder;
 
 const BOOTSTRAP_PACK: &[u8] = include_bytes!("../assets/etc-bootstrap.tar.xz");
-
-const INSTALL_SCRIPT_TPL: &'static str = r#"#!/bin/bash
-count=0
-PACKAGES=(
-{}
-)
-length=${#PACKAGES[@]}
-for p in ${PACKAGES[@]}; do
-count=$((count+1))
-echo "[$count/$length] Installing ${p}..."
-dpkg --force-depends --unpack "/var/cache/apt/archives/${p}"
-done
-count_c=1;length_c=$(dpkg -l | grep -c 'iU')
-function dpkg_progress () {
-    while read action step package; do
-if [ "$action" = 'processing:' -a "$step" = 'configure:' ]; then
-echo "[$count_c/$length_c] Configuring $package...";count_c=$(( $count_c + 1 ))
-fi
-    done
-}
-{ dpkg --status-fd=7 --configure --pending --force-configure-any --force-depends 7>&1 >&8 | dpkg_progress; } 8>&1
-"#;
+const INSTALL_SCRIPT_TPL: &str = include_str!("../assets/bootstrap.sh");
 
 #[derive(Deserialize)]
 pub struct Config {

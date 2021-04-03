@@ -602,9 +602,9 @@ dependencies = [
 
 [[package]]
 name = "libsolv-sys"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "58db7c08c707d969d613481583ffdca5ada28336667614ec8cae8740564b17fb"
+checksum = "273722660fe8c1bedac6cd880a964c2b7b53711e2b993773c77a54134f8d5183"
 dependencies = [
  "anyhow",
  "bindgen",
