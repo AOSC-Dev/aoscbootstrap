@@ -9,7 +9,11 @@ use anyhow::{anyhow, Result};
 use bytesize::ByteSize;
 use cli::build_cli;
 use solv::PackageMeta;
-use std::{fs::File, io::{BufRead, BufReader, Write}, path::Path};
+use std::{
+    fs::File,
+    io::{BufRead, BufReader, Write},
+    path::Path,
+};
 
 const DEFAULT_MIRROR: &str = "https://repo.aosc.io/debs";
 
@@ -71,7 +75,10 @@ fn collect_filenames(packages: &[PackageMeta]) -> Result<Vec<String>> {
     Ok(output)
 }
 
-fn include_extra_scripts<W: Write>(extra_scripts: Option<clap::Values>, output: &mut W) -> Result<()>{
+fn include_extra_scripts<W: Write>(
+    extra_scripts: Option<clap::Values>,
+    output: &mut W,
+) -> Result<()> {
     if let Some(scripts) = extra_scripts {
         eprintln!("Including {} extra scripts ...", scripts.len());
         let scripts = scripts.collect::<Vec<&str>>();
