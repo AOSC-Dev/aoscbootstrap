@@ -1,4 +1,10 @@
-use std::{ffi::CString, mem::MaybeUninit, process::{Child, Command, Stdio}, thread::sleep, time::Duration};
+use std::{
+    ffi::CString,
+    mem::MaybeUninit,
+    process::{Child, Command, Stdio},
+    thread::sleep,
+    time::Duration,
+};
 
 use anyhow::{anyhow, Result};
 use libc::{c_char, c_int};
@@ -100,7 +106,9 @@ fn nspawn_do(target: &str, args: &[&str]) -> Result<()> {
     let status = execute_container_command(&ns_name, args)?;
 
     eprintln!("Powering off the container ...");
-    Command::new("machinectl").args(&["poweroff", &ns_name]).status()?;
+    Command::new("machinectl")
+        .args(&["poweroff", &ns_name])
+        .status()?;
 
     if status != 0 {
         return Err(anyhow!("nspawn exited with status {}", status));

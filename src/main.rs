@@ -6,6 +6,7 @@ mod network;
 mod solv;
 
 use anyhow::{anyhow, Result};
+use bytesize::ByteSize;
 use cli::build_cli;
 use solv::PackageMeta;
 use std::{
@@ -13,7 +14,6 @@ use std::{
     io::{BufRead, BufReader},
     path::Path,
 };
-use bytesize::ByteSize;
 
 const DEFAULT_MIRROR: &str = "https://repo.aosc.io/debs";
 
@@ -75,6 +75,17 @@ fn collect_filenames(packages: &[PackageMeta]) -> Result<Vec<String>> {
     Ok(output)
 }
 
+fn check_disk_usage(required: u64, target: &Path) -> Result<()> {
+    use fs3::available_space;
+
+    let available = available_space(target)?;
+    if (available / 1024) < required {
+        return Err(anyhow!("It's not possible to continue, disk space not enough: {} required, but only {} is available. You need at least {} more.", ByteSize::kb(required), ByteSize::b(available),  ByteSize::kb(required - (available / 1024))));
+    }
+
+    Ok(())
+}
+
 fn main() {
     let matches = build_cli().get_matches();
     let branch = matches.value_of("BRANCH").unwrap();
@@ -84,6 +95,7 @@ fn main() {
     let config_path = matches.value_of("config").unwrap();
     let dl_only = matches.is_present("download-only");
     let s1_only = matches.is_present("stage1-only");
+    let clean_up = matches.is_present("clean");
     let extra_packages = matches.values_of("include");
     let extra_files = matches.values_of("include-files");
     let config = install::read_config(config_path).unwrap();
@@ -120,7 +132,11 @@ fn main() {
     solv::populate_pool(&mut pool, &paths).unwrap();
     let t = solv::calculate_deps(&mut pool, &all_stages).unwrap();
     let all_packages = t.create_metadata().unwrap();
-    eprintln!("Total installed size: {}", ByteSize::kb(t.get_size_change().abs() as u64));
+    eprintln!(
+        "Total installed size: {}",
+        ByteSize::kb(t.get_size_change().abs() as u64)
+    );
+    check_disk_usage(t.get_size_change() as u64, target_path).unwrap();
     eprintln!("Downloading packages ...");
     network::batch_download(&all_packages, mirror, &archive_path).unwrap();
     nix::unistd::sync();
@@ -129,10 +145,9 @@ fn main() {
         return;
     }
 
-    let stub_install = solv::calculate_deps(&mut pool, &config.stub_packages)
-        .unwrap()
-        .create_metadata()
-        .unwrap();
+    let st = solv::calculate_deps(&mut pool, &config.stub_packages).unwrap();
+    check_disk_usage(st.get_size_change() as u64, target_path).unwrap();
+    let stub_install = st.create_metadata().unwrap();
     eprintln!("Stage 1: Creating filesystem skeleton ...");
     std::fs::create_dir_all(target_path.join("dev")).unwrap();
     fs::bootstrap_apt(target_path, mirror, branch).unwrap();
@@ -147,8 +162,9 @@ fn main() {
     }
 
     eprintln!("Stage 2: Installing packages ...");
+    check_disk_usage(t.get_size_change() as u64, target_path).unwrap();
     let names: Vec<String> = collect_filenames(&all_packages).unwrap();
-    let script = install::write_install_script(&names, target_path).unwrap();
+    let script = install::write_install_script(&names, clean_up, target_path).unwrap();
     let script_file = script.path().file_name().unwrap().to_string_lossy();
     guest::run_in_guest(target, &["bash", "-e", &script_file]).unwrap();
     eprintln!("Stage 2 finished.\nBase system ready!");

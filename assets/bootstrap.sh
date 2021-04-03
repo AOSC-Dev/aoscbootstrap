@@ -1,4 +1,5 @@
 #!/bin/bash
+# === bootstrap.sh
 set -eo pipefail
 echo 'Setting up password ...'
 echo 'root:anthon' | chpasswd

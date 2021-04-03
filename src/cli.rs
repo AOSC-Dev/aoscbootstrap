@@ -13,6 +13,14 @@ pub fn build_cli() -> App<'static, 'static> {
                 .help("Sets a custom config file"),
         )
         .arg(
+            Arg::with_name("clean")
+                .short("x")
+                .long("clean")
+                .takes_value(false)
+                .required(false)
+                .help("Clean up (factory-reset) the bootstrapped environment"),
+        )
+        .arg(
             Arg::with_name("arch")
                 .short("a")
                 .long("arch")

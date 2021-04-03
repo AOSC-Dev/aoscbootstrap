@@ -14,6 +14,7 @@ use xz2::read::XzDecoder;
 
 const BOOTSTRAP_PACK: &[u8] = include_bytes!("../assets/etc-bootstrap.tar.xz");
 const INSTALL_SCRIPT_TPL: &str = include_str!("../assets/bootstrap.sh");
+const CLEANUP_SCRIPT: &[u8] = include_bytes!("../assets/cleanup.sh");
 
 #[derive(Deserialize)]
 pub struct Config {
@@ -76,9 +77,16 @@ fn generate_dpkg_install_script(packages: &[String]) -> String {
     INSTALL_SCRIPT_TPL.replacen("{}", &package_list, 1)
 }
 
-pub fn write_install_script(packages: &[String], target: &Path) -> Result<NamedTempFile> {
+pub fn write_install_script(
+    packages: &[String],
+    cleanup: bool,
+    target: &Path,
+) -> Result<NamedTempFile> {
     let mut f = NamedTempFile::new_in(target)?;
     f.write_all(generate_dpkg_install_script(packages).as_bytes())?;
+    if cleanup {
+        f.write_all(CLEANUP_SCRIPT)?;
+    }
 
     Ok(f)
 }
