@@ -121,6 +121,9 @@ fn main() {
     let client = network::make_new_client().unwrap();
     let target_path = Path::new(target);
     let archive_path = target_path.join("var/cache/apt/archives");
+    if target_path.exists() {
+        panic!("Target already exists. Please remove it first.");
+    }
     let mut extra_packages = if let Some(extra_packages) = extra_packages {
         extra_packages
             .map(|x| x.to_string())
@@ -191,7 +194,7 @@ fn main() {
     let mut script = install::write_install_script(&names, clean_up, target_path).unwrap();
     include_extra_scripts(extra_scripts, &mut script).unwrap();
     let script_file = script.path().file_name().unwrap().to_string_lossy();
-    guest::run_in_guest(target, &["bash", "-e", &script_file]).unwrap();
+    guest::run_in_guest(target, &["/usr/bin/bash", "-e", &script_file]).unwrap();
     nix::unistd::sync();
     eprintln!("Stage 2 finished.\nBase system ready!");
 }

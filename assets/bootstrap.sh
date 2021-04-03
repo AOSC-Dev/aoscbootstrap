@@ -23,4 +23,5 @@ fi
 }
 echo 'Copying skeleton files ...'
 cp -rvT /etc/skel /root
-{ dpkg --status-fd=7 --configure --pending --force-configure-any --force-depends 7>&1 >&8 | dpkg_progress; } 8>&1
+{ dpkg --status-fd=7 --configure --pending --force-configure-any --force-depends 7>&1 >&8 | dpkg_progress; } 8>&1 \
+|| { echo 'Configuring missed packages ...'; dpkg --configure -a; }
