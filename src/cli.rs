@@ -21,6 +21,15 @@ pub fn build_cli() -> App<'static, 'static> {
                 .help("Clean up (factory-reset) the bootstrapped environment"),
         )
         .arg(
+            Arg::with_name("scripts")
+                .short("s")
+                .long("scripts")
+                .takes_value(true)
+                .min_values(1)
+                .required(false)
+                .help("Run specified custom scripts during stage 2 (after clean up, if any)"),
+        )
+        .arg(
             Arg::with_name("arch")
                 .short("a")
                 .long("arch")

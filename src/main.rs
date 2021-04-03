@@ -9,11 +9,7 @@ use anyhow::{anyhow, Result};
 use bytesize::ByteSize;
 use cli::build_cli;
 use solv::PackageMeta;
-use std::{
-    fs::File,
-    io::{BufRead, BufReader},
-    path::Path,
-};
+use std::{fs::File, io::{BufRead, BufReader, Write}, path::Path};
 
 const DEFAULT_MIRROR: &str = "https://repo.aosc.io/debs";
 
@@ -75,6 +71,21 @@ fn collect_filenames(packages: &[PackageMeta]) -> Result<Vec<String>> {
     Ok(output)
 }
 
+fn include_extra_scripts<W: Write>(extra_scripts: Option<clap::Values>, output: &mut W) -> Result<()>{
+    if let Some(scripts) = extra_scripts {
+        eprintln!("Including {} extra scripts ...", scripts.len());
+        let scripts = scripts.collect::<Vec<&str>>();
+        output.write_all(b"\necho 'Running additional scripts ...';")?;
+        for s in scripts {
+            let mut f = File::open(s)?;
+            output.write_all(format!("\n# === {}\n", s).as_bytes())?;
+            std::io::copy(&mut f, output)?;
+        }
+    }
+
+    Ok(())
+}
+
 fn check_disk_usage(required: u64, target: &Path) -> Result<()> {
     use fs3::available_space;
 
@@ -98,6 +109,7 @@ fn main() {
     let clean_up = matches.is_present("clean");
     let extra_packages = matches.values_of("include");
     let extra_files = matches.values_of("include-files");
+    let extra_scripts = matches.values_of("scripts");
     let config = install::read_config(config_path).unwrap();
     let client = network::make_new_client().unwrap();
     let target_path = Path::new(target);
@@ -164,7 +176,8 @@ fn main() {
     eprintln!("Stage 2: Installing packages ...");
     check_disk_usage(t.get_size_change() as u64, target_path).unwrap();
     let names: Vec<String> = collect_filenames(&all_packages).unwrap();
-    let script = install::write_install_script(&names, clean_up, target_path).unwrap();
+    let mut script = install::write_install_script(&names, clean_up, target_path).unwrap();
+    include_extra_scripts(extra_scripts, &mut script).unwrap();
     let script_file = script.path().file_name().unwrap().to_string_lossy();
     guest::run_in_guest(target, &["bash", "-e", &script_file]).unwrap();
     eprintln!("Stage 2 finished.\nBase system ready!");
