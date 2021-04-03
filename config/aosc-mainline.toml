@@ -1,5 +1,19 @@
-stub-packages = ['apt',    'gcc-runtime', 'tar',      'xz',
-    'gnupg',  'grep',        'ca-certs', 'iptables',
-    'shadow', 'keyutils']
-base-packages = ['bash-completion', 'bash-startup', 'iana-etc', 'libidn',
-    'tzdata']
+stub-packages = [
+  "apt",
+  "gcc-runtime",
+  "tar",
+  "xz",
+  "gnupg",
+  "grep",
+  "ca-certs",
+  "iptables",
+  "shadow",
+  "keyutils"
+]
+base-packages = [
+  "bash-completion",
+  "bash-startup",
+  "iana-etc",
+  "libidn",
+  "tzdata"
+]
