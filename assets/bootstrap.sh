@@ -21,7 +21,7 @@ echo "[$count_c/$length_c] Configuring $package...";count_c=$(( count_c + 1 ))
 fi
     done
 }
-echo 'Copying skeleton files ...'
-cp -rvT /etc/skel /root
 { dpkg --status-fd=7 --configure --pending --force-configure-any --force-depends 7>&1 >&8 | dpkg_progress; } 8>&1 \
 || { echo 'Configuring missed packages ...'; dpkg --configure -a; }
+echo 'Copying skeleton files ...'
+cp -rvT /etc/skel /root
