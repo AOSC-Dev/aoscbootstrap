@@ -102,7 +102,7 @@ fn main() {
     let branch = matches.value_of("BRANCH").unwrap();
     let target = matches.value_of("TARGET").unwrap();
     let mirror = matches.value_of("MIRROR").unwrap_or(DEFAULT_MIRROR);
-    let arches = matches.values_of("arch").unwrap().collect::<Vec<&str>>();
+    let mut arches = matches.values_of("arch").unwrap().collect::<Vec<&str>>();
     let config_path = matches.value_of("config").unwrap();
     let dl_only = matches.is_present("download-only");
     let s1_only = matches.is_present("stage1-only");
@@ -125,6 +125,11 @@ fn main() {
         let extras = collect_packages_from_lists(&extra_files.collect::<Vec<&str>>()).unwrap();
         eprintln!("Read {} extra packages from the lists.", extras.len());
         extra_packages.extend(extras);
+    }
+    // append the `noarch` architecture if it does not exist.
+    // this is to avoid confusing issues with dependency resolving.
+    if !arches.contains(&"all") {
+        arches.push("all");
     }
 
     std::fs::create_dir_all(target_path.join("var/lib/apt/lists")).unwrap();
@@ -180,5 +185,6 @@ fn main() {
     include_extra_scripts(extra_scripts, &mut script).unwrap();
     let script_file = script.path().file_name().unwrap().to_string_lossy();
     guest::run_in_guest(target, &["bash", "-e", &script_file]).unwrap();
+    nix::unistd::sync();
     eprintln!("Stage 2 finished.\nBase system ready!");
 }

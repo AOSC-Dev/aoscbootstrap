@@ -5,11 +5,13 @@
 AOSCBootstrap requires the following libraries:
 
 - liblzma
+- openssl
+- zlib
 
 On AOSC OS, you may install these dependencies using the following command:
 
 ```bash
-# apt install xz openssl
+# apt install xz openssl zlib
 ```
 
 ## Usage
@@ -47,6 +49,18 @@ Assume you have saved the file as `base.lst`, then you can use AOSCBootstrap lik
 ```
 aoscbootstrap stable /root/aosc http://localhost/debs/ --arch=amd64 --include-file=base.lst
 ```
+
+### Using Recipes from `CIEL!`
+
+A conversion script is provided in `recipes` directory. To use this script, you need Perl and Ciel to be installed.
+
+To convert the recipes, simply execute the following command at the root directory of this repository:
+
+```
+perl recipes/convert.pl /usr/libexec/ciel-plugin/ciel-generate recipes/
+```
+
+And then you should be able to find all the "vanilla" AOSC OS recipes under the `recipes` folder.
 
 ## Usage with `CIEL!`
 
