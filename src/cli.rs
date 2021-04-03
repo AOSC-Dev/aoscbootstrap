@@ -56,6 +56,7 @@ pub fn build_cli() -> App<'static, 'static> {
             Arg::with_name("download-only")
                 .short("g")
                 .long("download-only")
+                .conflicts_with("clean")
                 .takes_value(false)
                 .help("Only downloads packages, do not progress further"),
         )

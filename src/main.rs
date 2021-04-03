@@ -182,17 +182,19 @@ fn main() {
     fs::make_device_nodes(target_path).unwrap();
     eprintln!("Stage 1: Extracting packages ...");
     extract_packages(&stub_install, target_path, &archive_path).unwrap();
+    let names: Vec<String> = collect_filenames(&all_packages).unwrap();
+    let mut script = install::write_install_script(&names, clean_up, target_path).unwrap();
+    include_extra_scripts(extra_scripts, &mut script).unwrap();
     nix::unistd::sync();
     if s1_only {
+        let (_, path) = script.keep().unwrap();
         eprintln!("Stage 1 finished.");
+        eprintln!("If you want to continue stage 2, you can run `bash {:?}` inside the container.", path.file_name().unwrap());
         return;
     }
 
     eprintln!("Stage 2: Installing packages ...");
     check_disk_usage(t.get_size_change() as u64, target_path).unwrap();
-    let names: Vec<String> = collect_filenames(&all_packages).unwrap();
-    let mut script = install::write_install_script(&names, clean_up, target_path).unwrap();
-    include_extra_scripts(extra_scripts, &mut script).unwrap();
     let script_file = script.path().file_name().unwrap().to_string_lossy();
     guest::run_in_guest(target, &["/usr/bin/bash", "-e", &script_file]).unwrap();
     nix::unistd::sync();
