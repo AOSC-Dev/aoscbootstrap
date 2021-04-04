@@ -79,6 +79,17 @@ pub fn fetch_manifests(
 }
 
 pub fn batch_download(pkgs: &[PackageMeta], mirror: &str, root: &Path) -> Result<()> {
+    for i in 0..3 {
+        if batch_download_inner(pkgs, mirror, root).is_ok() {
+            return Ok(());
+        }
+        eprintln!("[{}/3] Retrying ...", i);
+    }
+
+    Err(anyhow!("Failed to download packages"))
+}
+
+fn batch_download_inner(pkgs: &[PackageMeta], mirror: &str, root: &Path) -> Result<()> {
     let client = make_new_client()?;
     let total = pkgs.len();
     let count = AtomicUsize::new(0);
@@ -96,8 +107,11 @@ pub fn batch_download(pkgs: &[PackageMeta], mirror: &str, root: &Path) -> Result
             );
             if let Some(filename) = filename.file_name() {
                 let path = root.join(filename);
-                if fetch_url(client, &format!("{}/{}", mirror, pkg.path), &path).is_err() {
+                if !path.is_file()
+                    && fetch_url(client, &format!("{}/{}", mirror, pkg.path), &path).is_err()
+                {
                     error.store(true, Ordering::SeqCst);
+                    eprintln!("Download failed: {}", pkg.name);
                     return;
                 }
                 println!(
@@ -107,11 +121,14 @@ pub fn batch_download(pkgs: &[PackageMeta], mirror: &str, root: &Path) -> Result
                     pkg.name
                 );
                 if sha256sum_file(&path).is_err() {
+                    std::fs::remove_file(path).ok();
                     error.store(true, Ordering::SeqCst);
+                    eprintln!("Verification failed: {}", pkg.name);
                     return;
                 }
             } else {
                 error.store(true, Ordering::SeqCst);
+                eprintln!("Filename unknown: {}", pkg.name);
             }
         },
     );
