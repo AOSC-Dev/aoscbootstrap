@@ -1,0 +1,18 @@
+name: Rust
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: hecrj/setup-rust-action@master
+      with:
+        rust-version: stable
+
+    - name: Install dependencies
+      run: sudo apt-get update && sudo apt-get install -y libssl-dev pkg-config liblzma-dev cmake make
+
+    - uses: actions/checkout@v2
+    - name: Build
+      run: cargo build --verbose
