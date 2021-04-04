@@ -29,4 +29,4 @@ bytesize = "1.0"
 fs3 = "0.5"
 
 [profile.release]
-lto = "fat"
+lto = true
