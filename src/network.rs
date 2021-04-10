@@ -1,11 +1,15 @@
 use anyhow::{anyhow, Result};
 use rayon::prelude::*;
 use reqwest::blocking::Client;
-use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::{fs::File, path::PathBuf};
 use std::{
     path::Path,
     sync::{Arc, Mutex},
+};
+use std::{
+    sync::atomic::{AtomicBool, AtomicUsize, Ordering},
+    thread::sleep,
+    time::Duration,
 };
 use url::Url;
 
@@ -84,6 +88,7 @@ pub fn batch_download(pkgs: &[PackageMeta], mirror: &str, root: &Path) -> Result
             return Ok(());
         }
         eprintln!("[{}/3] Retrying ...", i);
+        sleep(Duration::from_secs(2));
     }
 
     Err(anyhow!("Failed to download packages"))
