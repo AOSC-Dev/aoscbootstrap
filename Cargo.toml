@@ -12,7 +12,7 @@ rand = "0.8"
 which = "4.1"
 toml = "0.5"
 ar = "0.8"
-tar = "0.4"
+tar = { git = "https://github.com/liushuyu/tar-rs", rev = "9caa19369e6af332939421153843a22e31bc61b0" }
 clap = "2.33"
 anyhow = "1.0"
 nix = "0.20"
@@ -27,6 +27,7 @@ xz2 = "0.1"
 tempfile = "3.2"
 bytesize = "1.0"
 fs3 = "0.5"
+num_cpus = "1.13"
 
 [profile.release]
 lto = true

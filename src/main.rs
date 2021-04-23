@@ -120,10 +120,16 @@ fn main() {
     let config = install::read_config(config_path).unwrap();
     let client = network::make_new_client().unwrap();
     let comps = matches.values_of("comps");
+    let tar = matches.value_of("tar");
     let target_path = Path::new(target);
     let archive_path = target_path.join("var/cache/apt/archives");
+    let mut threads = num_cpus::get();
     if target_path.exists() {
         panic!("Target already exists. Please remove it first.");
+    }
+    if let Some(jobs) = matches.value_of("jobs") {
+        threads = jobs.parse::<usize>().expect("Invalid number of jobs");
+        std::env::set_var("RAYON_NUM_THREADS", jobs);
     }
     let mut extra_packages = if let Some(extra_packages) = extra_packages {
         extra_packages
@@ -207,6 +213,12 @@ fn main() {
     check_disk_usage(t.get_size_change() as u64, target_path).unwrap();
     let script_file = script.path().file_name().unwrap().to_string_lossy();
     guest::run_in_guest(target, &["/usr/bin/bash", "-e", &script_file]).unwrap();
+    drop(script);
     nix::unistd::sync();
     eprintln!("Stage 2 finished.\nBase system ready!");
+
+    if let Some(tar) = tar {
+        eprintln!("Compressing the tarball, please wait patiently ...");
+        fs::archive_tarball(target_path, Path::new(tar), threads as u32).unwrap();
+    }
 }

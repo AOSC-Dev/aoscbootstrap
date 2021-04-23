@@ -7,6 +7,11 @@ use std::{
     fs::{create_dir_all, write, File},
     io::Read,
 };
+use tar::Builder;
+use xz2::stream::{Filters, LzmaOptions, MtStreamBuilder, Stream};
+use xz2::write::XzEncoder;
+
+const LZMA_PRESET_EXTREME: u32 = 1 << 31;
 
 pub fn bootstrap_apt(root: &Path, mirror: &str, branch: &str) -> Result<()> {
     create_dir_all(root.join("var/lib/dpkg"))?;
@@ -22,6 +27,32 @@ pub fn bootstrap_apt(root: &Path, mirror: &str, branch: &str) -> Result<()> {
     )?;
 
     Ok(())
+}
+
+/// Make a tarball (xz compressed)
+pub fn archive_tarball(root: &Path, target: &Path, threads: u32) -> Result<()> {
+    let f = File::create(target)?;
+    let xz = build_xz_encoder(threads)?;
+    let mut builder = Builder::new(XzEncoder::new_stream(f, xz));
+    builder.mode(tar::HeaderMode::Complete);
+    builder.follow_symlinks(false);
+    builder.append_dir_all(".", root)?;
+    builder.finish()?;
+    builder.into_inner()?.finish()?.sync_all()?;
+
+    Ok(())
+}
+
+fn build_xz_encoder(threads: u32) -> Result<Stream> {
+    let mut filter = Filters::new();
+    let mut opts = LzmaOptions::new_preset(9 | LZMA_PRESET_EXTREME)?;
+    opts.nice_len(273);
+    filter.lzma2(&opts);
+
+    Ok(MtStreamBuilder::new()
+        .filters(filter)
+        .threads(threads)
+        .encoder()?)
 }
 
 /// Calculate the Sha256 checksum of the given stream

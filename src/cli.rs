@@ -76,6 +76,18 @@ pub fn build_cli() -> App<'static, 'static> {
                 .help("Add additional components"),
         )
         .arg(
+            Arg::with_name("jobs")
+                .short("-j")
+                .takes_value(true)
+                .help("Limit the number of parallel jobs"),
+        )
+        .arg(
+            Arg::with_name("tar")
+                .long("export-tar")
+                .takes_value(true)
+                .help("Export a xz compressed tar archive"),
+        )
+        .arg(
             Arg::with_name("BRANCH")
                 .required(true)
                 .help("Branch to use"),
