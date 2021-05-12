@@ -50,6 +50,13 @@ Assume you have saved the file as `base.lst`, then you can use AOSCBootstrap lik
 aoscbootstrap stable /root/aosc http://localhost/debs/ --arch=amd64 --include-file=base.lst
 ```
 
+### Additional Features
+
+- Clean up installations (`ciel factory-reset` equivalent): `-x`
+- Run additional scripts **after** cleaning up (if any): `-s <script>`
+- Compress a `.tar.xz` tarball: `--export-tar <path/to/tarball>`
+- Only runs up until Stage 1 (base filesystem): `-1`
+
 ### Using Recipes from `CIEL!`
 
 A conversion script is provided in `recipes` directory. To use this script, you need Perl and Ciel to be installed.
