@@ -28,6 +28,7 @@ tempfile = "3.2"
 bytesize = "1.0"
 fs3 = "0.5"
 num_cpus = "1.13"
+owo-colors = "2.0"
 
 [profile.release]
 lto = true

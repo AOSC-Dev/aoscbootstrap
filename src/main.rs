@@ -14,6 +14,7 @@ use std::{
     io::{BufRead, BufReader, Write},
     path::Path,
 };
+use owo_colors::colored::*;
 
 const DEFAULT_MIRROR: &str = "https://repo.aosc.io/debs";
 
@@ -28,7 +29,7 @@ fn extract_packages(packages: &[PackageMeta], target: &Path, archive_path: &Path
             "[{}/{}] Extracting {} ...",
             count,
             packages.len(),
-            package.name
+            package.name.cyan()
         );
         let f = File::open(archive_path.join(filename))?;
         install::extract_deb(f, target)?;
@@ -80,7 +81,7 @@ fn include_extra_scripts<W: Write>(
     output: &mut W,
 ) -> Result<()> {
     if let Some(scripts) = extra_scripts {
-        eprintln!("Including {} extra scripts ...", scripts.len());
+        eprintln!("Including {} extra scripts ...", scripts.len().bold());
         let scripts = scripts.collect::<Vec<&str>>();
         output.write_all(b"\necho 'Running additional scripts ...';")?;
         for s in scripts {
@@ -125,7 +126,7 @@ fn main() {
     let archive_path = target_path.join("var/cache/apt/archives");
     let mut threads = num_cpus::get();
     if target_path.exists() {
-        panic!("Target already exists. Please remove it first.");
+        panic!("{}", "Target already exists. Please remove it first.".red().bold());
     }
     if let Some(jobs) = matches.value_of("jobs") {
         threads = jobs.parse::<usize>().expect("Invalid number of jobs");
@@ -140,7 +141,7 @@ fn main() {
     };
     if let Some(extra_files) = extra_files {
         let extras = collect_packages_from_lists(&extra_files.collect::<Vec<&str>>()).unwrap();
-        eprintln!("Read {} extra packages from the lists.", extras.len());
+        eprintln!("Read {} extra packages from the lists.", extras.len().cyan().bold());
         extra_packages.extend(extras);
     }
     // append the `noarch` architecture if it does not exist.
@@ -174,14 +175,14 @@ fn main() {
     let all_packages = t.create_metadata().unwrap();
     eprintln!(
         "Total installed size: {}",
-        ByteSize::kb(t.get_size_change().abs() as u64)
+        ByteSize::kb(t.get_size_change().abs() as u64).cyan().bold()
     );
     check_disk_usage(t.get_size_change() as u64, target_path).unwrap();
     eprintln!("Downloading packages ...");
     network::batch_download(&all_packages, mirror, &archive_path).unwrap();
     nix::unistd::sync();
     if dl_only {
-        eprintln!("Download finished.");
+        eprintln!("{}", "Download finished.".green().bold());
         return;
     }
 
@@ -204,7 +205,7 @@ fn main() {
         eprintln!("Stage 1 finished.");
         eprintln!(
             "If you want to continue stage 2, you can run `bash {:?}` inside the container.",
-            path.file_name().unwrap()
+            path.file_name().unwrap().underline()
         );
         return;
     }
@@ -215,13 +216,13 @@ fn main() {
     guest::run_in_guest(target, &["/usr/bin/bash", "-e", &script_file]).unwrap();
     drop(script);
     nix::unistd::sync();
-    eprintln!("Stage 2 finished.\nBase system ready!");
+    eprintln!("{}", "Stage 2 finished.\nBase system ready!".green().bold());
 
     if let Some(tar) = tar {
         eprintln!("Compressing the tarball, please wait patiently ...");
         let path = Path::new(tar);
         fs::archive_tarball(target_path, path, threads as u32).unwrap();
         network::sha256sum_file_tag(path).unwrap();
-        eprintln!("Tarball available at {}", path.display());
+        eprintln!("Tarball available at {}", path.display().cyan());
     }
 }
