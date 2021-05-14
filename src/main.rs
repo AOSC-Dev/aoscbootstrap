@@ -222,5 +222,6 @@ fn main() {
         let path = Path::new(tar);
         fs::archive_tarball(target_path, path, threads as u32).unwrap();
         network::sha256sum_file_tag(path).unwrap();
+        eprintln!("Tarball available at {}", path.display());
     }
 }
