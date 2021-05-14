@@ -9,7 +9,6 @@ use ar::Archive as ArArchive;
 use serde::Deserialize;
 use tar::Archive as TarArchive;
 use tempfile::NamedTempFile;
-use toml;
 use xz2::read::XzDecoder;
 
 const BOOTSTRAP_PACK: &[u8] = include_bytes!("../assets/etc-bootstrap.tar.xz");

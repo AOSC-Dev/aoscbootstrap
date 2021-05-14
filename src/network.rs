@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Result};
 use rayon::prelude::*;
 use reqwest::blocking::Client;
-use std::{fs::File, path::PathBuf};
+use std::{fs::File, io::Write, path::PathBuf};
 use std::{
     path::Path,
     sync::{Arc, Mutex},
@@ -19,6 +19,13 @@ fn sha256sum_file(path: &Path) -> Result<String> {
     let mut f = File::open(path)?;
 
     sha256sum(&mut f)
+}
+
+pub(crate) fn sha256sum_file_tag(path: &Path) -> Result<()> {
+    let mut f = File::create(format!("{}.sha256sum", path.to_string_lossy()))?;
+    f.write_all(sha256sum_file(&path)?.as_bytes())?;
+
+    Ok(())
 }
 
 pub fn make_new_client() -> Result<Client> {
@@ -129,7 +136,6 @@ fn batch_download_inner(pkgs: &[PackageMeta], mirror: &str, root: &Path) -> Resu
                     std::fs::remove_file(path).ok();
                     error.store(true, Ordering::SeqCst);
                     eprintln!("Verification failed: {}", pkg.name);
-                    return;
                 }
             } else {
                 error.store(true, Ordering::SeqCst);
