@@ -1,0 +1,13 @@
+acbs
+admin-base
+autobuild3
+core-base
+debug-base
+devel-base
+editor-base
+git
+network-base
+python-base
+systemd-base
+util-base
+web-base
