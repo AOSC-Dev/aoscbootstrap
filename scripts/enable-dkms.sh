@@ -1,2 +1,2 @@
-#!/bin/bash -e
+echo "Enabling DKMS ..."
 systemctl enable dkms.service
