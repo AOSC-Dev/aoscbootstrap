@@ -1,2 +1,2 @@
-abinfo "Resetting APT sources.list ..."
+echo "Resetting APT sources.list ..."
 apt-gen-list
