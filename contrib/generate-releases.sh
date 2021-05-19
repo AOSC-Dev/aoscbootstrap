@@ -24,6 +24,7 @@ if [[ $# -eq 0 || "$1" == "--help" || "$1" == "-h" ]]; then
 fi
 
 export TZ='UTC'
+export RETRO=false
 
 mkdir -pv os-${ARCH:-$(dpkg --print-architecture)}
 
@@ -49,6 +50,7 @@ for i in $@; do
             --arch ${ARCH:-$(dpkg --print-architecture)} \
             -s /usr/share/aoscbootstrap/scripts/reset-repo.sh \
             --include-files /usr/share/aoscbootstrap/recipes/$i.lst \
-            --export-tar mkdir -pv os-${ARCH:-$(dpkg --print-architecture)}/$i/aosc-os-retro_${i}_$(date +%Y%m%d)_${ARCH:-$(dpkg --print-architecture)}.tar.xz \
+            --export-tar os-${ARCH:-$(dpkg --print-architecture)}/$i/aosc-os-retro_${i}_$(date +%Y%m%d)_${ARCH:-$(dpkg --print-architecture)}.tar.xz \
             stable $i ${REPO:-https://repo.aosc.io/debs}
+    fi
 done
