@@ -1,2 +1,2 @@
 echo "Enabling DKMS ..."
-systemctl enable dkms.service
+systemctl enable dkms.service || true

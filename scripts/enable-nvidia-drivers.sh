@@ -1,3 +1,3 @@
 echo "Enabling presets ..."
 systemctl preset-all
-systemctl enable nvidia-persistenced
+systemctl enable nvidia-persistenced || true
