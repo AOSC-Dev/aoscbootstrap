@@ -90,7 +90,7 @@ pub fn fetch_manifests(
 }
 
 pub fn batch_download(pkgs: &[PackageMeta], mirror: &str, root: &Path) -> Result<()> {
-    for i in 0..3 {
+    for i in 1..=3 {
         if batch_download_inner(pkgs, mirror, root).is_ok() {
             return Ok(());
         }
@@ -103,7 +103,7 @@ pub fn batch_download(pkgs: &[PackageMeta], mirror: &str, root: &Path) -> Result
 
 fn batch_download_inner(pkgs: &[PackageMeta], mirror: &str, root: &Path) -> Result<()> {
     let client = make_new_client()?;
-    let total = pkgs.len();
+    let total = pkgs.len() * 2;
     let count = AtomicUsize::new(0);
     let error = AtomicBool::new(false);
     pkgs.par_iter().for_each_init(
@@ -126,6 +126,7 @@ fn batch_download_inner(pkgs: &[PackageMeta], mirror: &str, root: &Path) -> Resu
                     eprintln!("Download failed: {}", pkg.name);
                     return;
                 }
+                count.fetch_add(1, Ordering::SeqCst);
                 println!(
                     "[{}/{}] Verifying {}...",
                     count.load(Ordering::SeqCst),

@@ -8,13 +8,13 @@ mod solv;
 use anyhow::{anyhow, Result};
 use bytesize::ByteSize;
 use cli::build_cli;
+use owo_colors::colored::*;
 use solv::PackageMeta;
 use std::{
     fs::File,
     io::{BufRead, BufReader, Write},
     path::Path,
 };
-use owo_colors::colored::*;
 
 const DEFAULT_MIRROR: &str = "https://repo.aosc.io/debs";
 
@@ -43,21 +43,38 @@ fn collect_packages_from_lists(paths: &[&str]) -> Result<Vec<String>> {
     packages.reserve(1024);
 
     for path in paths {
-        let f = File::open(path)?;
-        let reader = BufReader::new(f);
-        for line in reader.lines() {
-            let line = line?;
-            // skip comment
-            if line.starts_with('#') || line.is_empty() {
-                continue;
-            }
-            // trim whitespace
-            let trimmed = line.trim();
-            packages.push(trimmed.to_owned());
-        }
+        collect_packages_from_list(path, &mut packages, 0)?;
     }
 
     Ok(packages)
+}
+
+fn collect_packages_from_list<P: AsRef<Path>>(
+    path: P,
+    packages: &mut Vec<String>,
+    depth: usize,
+) -> Result<()> {
+    if depth > 32 {
+        return Err(anyhow!("Recursion limit exceeded. Is there a loop?"));
+    }
+    let f = File::open(path.as_ref())?;
+    let reader = BufReader::new(f);
+    for line in reader.lines() {
+        let line = line?;
+        if let Some(inc) = line.strip_prefix("%include ") {
+            let real_path = path.as_ref().canonicalize()?;
+            collect_packages_from_list(real_path.join(inc.trim()), packages, depth + 1)?;
+        }
+        // skip comment
+        if line.starts_with('#') || line.is_empty() {
+            continue;
+        }
+        // trim whitespace
+        let trimmed = line.trim();
+        packages.push(trimmed.to_owned());
+    }
+
+    Ok(())
 }
 
 #[inline]
@@ -126,7 +143,12 @@ fn main() {
     let archive_path = target_path.join("var/cache/apt/archives");
     let mut threads = num_cpus::get();
     if target_path.exists() {
-        panic!("{}", "Target already exists. Please remove it first.".red().bold());
+        panic!(
+            "{}",
+            "Target already exists. Please remove it first."
+                .red()
+                .bold()
+        );
     }
     if let Some(jobs) = matches.value_of("jobs") {
         threads = jobs.parse::<usize>().expect("Invalid number of jobs");
@@ -141,7 +163,10 @@ fn main() {
     };
     if let Some(extra_files) = extra_files {
         let extras = collect_packages_from_lists(&extra_files.collect::<Vec<&str>>()).unwrap();
-        eprintln!("Read {} extra packages from the lists.", extras.len().cyan().bold());
+        eprintln!(
+            "Read {} extra packages from the lists.",
+            extras.len().cyan().bold()
+        );
         extra_packages.extend(extras);
     }
     // append the `noarch` architecture if it does not exist.
