@@ -53,4 +53,9 @@ for i in $@; do
             --export-tar os-${ARCH:-$(dpkg --print-architecture)}/$i/aosc-os-retro_${i}_$(date +%Y%m%d)_${ARCH:-$(dpkg --print-architecture)}.tar.xz \
             stable $i ${REPO:-https://repo.aosc.io/debs}
     fi
+    rm -r $i
+
+    # Hack, just to make sure that things are catching up (we observed a weird caching issue on kp920).
+    sync
+    sleep 1
 done
