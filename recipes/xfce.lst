@@ -1,2 +1,2 @@
-%include xfce-common.lst
+%include common/xfce-common.lst
 kernel-base

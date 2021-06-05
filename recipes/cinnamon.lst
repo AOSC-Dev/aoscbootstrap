@@ -1,2 +1,2 @@
-%include cinnamon-common.lst
+%include common/cinnamon-common.lst
 kernel-base

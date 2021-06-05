@@ -1,2 +1,2 @@
-%include base-common.lst
+%include common/base-common.lst
 kernel-base

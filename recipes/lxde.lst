@@ -1,2 +1,2 @@
-%include lxde-common.lst
+%include common/lxde-common.lst
 kernel-base

@@ -1,2 +1,2 @@
-%include kde-common.lst
+%include common/kde-common.lst
 kernel-base
