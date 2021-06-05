@@ -1,15 +1,3 @@
-admin-base
-alsa-utils
-aosc-os-presets-base
-boot-base
-core-base
-editor-base
-kernel-base
-kmscon-base
-network-base
+%include base.lst
 nvidia+340
 nvidia-libgl+340
-python-base
-systemd-base
-util-base
-web-base
