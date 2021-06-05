@@ -1,0 +1,2 @@
+%include ../xfce.lst
+%include ../common/sun50i-h5-orangepi-pc2.lst

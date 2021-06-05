@@ -1,0 +1,2 @@
+%include ../xfce.lst
+%include ../common/sun50i-a64-pinebook.lst

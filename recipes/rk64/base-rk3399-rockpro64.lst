@@ -1,0 +1,2 @@
+%include ../base.lst
+%include ../common/rk3399-rockpro64.lst

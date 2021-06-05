@@ -1,0 +1,2 @@
+%include ../base.lst
+%include ../common/sun50i-h6-pine-h64.lst

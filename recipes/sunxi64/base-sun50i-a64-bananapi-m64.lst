@@ -1,0 +1,2 @@
+%include ../base.lst
+%include ../common/sun50i-a64-bananapi-m64.lst

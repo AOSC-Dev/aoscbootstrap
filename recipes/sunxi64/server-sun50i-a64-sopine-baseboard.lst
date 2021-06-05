@@ -1,0 +1,2 @@
+%include ../server.lst
+%include ../common/sun50i-a64-sopine-baseboard.lst

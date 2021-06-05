@@ -1,0 +1,2 @@
+%include ../mate.lst
+%include ../common/sun50i-h5-orangepi-prime.lst

@@ -1,0 +1,2 @@
+%include ../gnome.lst
+%include ../common/rk3399-pinebook-pro.lst

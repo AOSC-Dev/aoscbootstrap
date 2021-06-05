@@ -1,0 +1,2 @@
+%include ../lxde.lst
+%include ../common/sun50i-h5-libretech-all-h3-cc.lst
