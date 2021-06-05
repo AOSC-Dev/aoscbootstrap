@@ -63,6 +63,7 @@ fn collect_packages_from_list<P: AsRef<Path>>(
         let line = line?;
         if let Some(inc) = line.strip_prefix("%include ") {
             let real_path = path.as_ref().canonicalize()?;
+            let real_path = real_path.parent().ok_or_else(|| anyhow!("Invalid path"))?;
             collect_packages_from_list(real_path.join(inc.trim()), packages, depth + 1)?;
         }
         // skip comment
