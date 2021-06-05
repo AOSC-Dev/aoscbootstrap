@@ -1,13 +1,2 @@
-admin-base
-alsa-utils
-aosc-os-presets-base
-boot-base
-core-base
-editor-base
+%include base-common.lst
 kernel-base
-kmscon-base
-network-base
-python-base
-systemd-base
-util-base
-web-base
