@@ -1,0 +1,14 @@
+admin-base
+alsa-utils
+aosc-os-presets-base
+boot-base
+core-base
+dracut
+editor-base
+kernel-base
+kmscon-base
+network-base
+python-base
+systemd-base
+util-base
+web-base
