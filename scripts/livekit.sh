@@ -1,5 +1,7 @@
 echo "Generating a LiveKit initramfs ..."
-dracut --add "dmsquash-live livenet" "/live-initramfs.img"
+dracut \
+    --add "dmsquash-live livenet" "/live-initramfs.img" \
+    $(ls /usr/lib/modules/)
 
 echo "Moving kernel image out ..."
 mv -v /boot/vmlinu* /kernel
