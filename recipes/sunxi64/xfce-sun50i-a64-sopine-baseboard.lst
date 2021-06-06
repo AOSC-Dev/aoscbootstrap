@@ -1,2 +1,3 @@
-%include ../xfce.lst
+%include ../common/xfce-common.lst
 %include ../common/sun50i-a64-sopine-baseboard.lst
+%include ../common/sunxi64-common.lst

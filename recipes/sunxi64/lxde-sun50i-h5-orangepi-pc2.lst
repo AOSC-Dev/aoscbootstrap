@@ -1,2 +1,3 @@
-%include ../lxde.lst
+%include ../common/lxde-common.lst
 %include ../common/sun50i-h5-orangepi-pc2.lst
+%include ../common/sunxi64-common.lst

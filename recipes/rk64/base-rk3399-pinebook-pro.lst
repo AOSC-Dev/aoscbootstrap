@@ -1,2 +1,3 @@
-%include ../base.lst
+%include ../common/base-common.lst
 %include ../common/rk3399-pinebook-pro.lst
+%include ../common/rk64-common.lst

@@ -1,2 +1,3 @@
-%include ../server.lst
+%include ../common/server-common.lst
 %include ../common/sun50i-h5-libretech-all-h3-cc.lst
+%include ../common/sunxi64-common.lst

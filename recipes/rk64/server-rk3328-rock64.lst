@@ -1,2 +1,3 @@
-%include ../server.lst
+%include ../common/server-common.lst
 %include ../common/rk3328-rock64.lst
+%include ../common/rk64-common.lst

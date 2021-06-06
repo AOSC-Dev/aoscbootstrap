@@ -1,2 +1,3 @@
-%include ../mate.lst
+%include ../common/mate-common.lst
 %include ../common/sun50i-a64-pinebook.lst
+%include ../common/sunxi64-common.lst
