@@ -7,6 +7,7 @@ echo "Moving kernel image out ..."
 mv -v /boot/vmlinu* /kernel
 
 echo "Enabling auto-login ..."
+mkdir -pv /etc/systemd/system/getty@tty1.service.d/
 cat > /etc/systemd/system/getty@tty1.service.d/override.conf << EOF
 [Service]
 Type=simple
