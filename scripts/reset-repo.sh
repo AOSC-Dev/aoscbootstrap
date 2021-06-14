@@ -1,2 +1,2 @@
 echo "Resetting APT sources.list ..."
-apt-gen-list
+apt-gen-list reset-mirror
