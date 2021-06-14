@@ -1,6 +1,6 @@
 [package]
 name = "aoscbootstrap"
-version = "0.1.10-alpha.0"
+version = "0.1.10"
 authors = ["liushuyu <liushuyu011@gmail.com>"]
 edition = "2018"
 
