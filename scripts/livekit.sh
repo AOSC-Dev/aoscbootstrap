@@ -4,7 +4,14 @@ dracut \
     $(ls /usr/lib/modules/)
 
 echo "Moving kernel image out ..."
-mv -v /boot/vmlinu* /kernel
+if [ ! -h /boot/vmlinuz-* ]; then
+    mv -v /boot/vmlinuz-* /kernel
+elif [ ! -h /boot/vmlinux-* ]; then
+    mv -v /boot/vmlinux-* /kernel
+else
+    echo "No kernel installed, aborting ..."
+fi
+rm -v /boot/vmlinu*
 
 echo "Enabling auto-login ..."
 mkdir -pv /etc/systemd/system/getty@tty1.service.d/
