@@ -1,0 +1,2 @@
+%include retro/base-common.lst
+kernel-base
