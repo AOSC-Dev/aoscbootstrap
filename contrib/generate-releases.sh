@@ -51,7 +51,7 @@ for i in $@; do
             -s /usr/share/aoscbootstrap/scripts/reset-repo.sh \
             --include-files /usr/share/aoscbootstrap/recipes/$i.lst \
             --export-tar os-${ARCH:-$(dpkg --print-architecture)}/$i/aosc-os-retro_${i}_$(date +%Y%m%d)_${ARCH:-$(dpkg --print-architecture)}.tar.xz \
-            stable $i ${REPO:-https://repo.aosc.io/debs}
+            stable $i ${REPO:-https://repo.aosc.io/debs-retro}
     fi
     rm -r $i
 
