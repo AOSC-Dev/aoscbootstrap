@@ -1,2 +1,2 @@
-%include common/kde-common.lst
+%include mainline/kde-common.lst
 kernel-base

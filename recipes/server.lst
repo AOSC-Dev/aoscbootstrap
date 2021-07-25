@@ -1,2 +1,2 @@
-%include common/server-common.lst
+%include mainline/server-common.lst
 kernel-base

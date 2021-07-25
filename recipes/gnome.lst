@@ -1,2 +1,2 @@
-%include common/gnome-common.lst
+%include mainline/gnome-common.lst
 kernel-base

@@ -1,2 +1,2 @@
-%include common/mate-common.lst
+%include mainline/mate-common.lst
 kernel-base
