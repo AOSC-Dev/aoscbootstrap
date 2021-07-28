@@ -12,10 +12,10 @@ rand = "0.8"
 which = "4.1"
 toml = "0.5"
 ar = "0.8"
-tar = { git = "https://github.com/liushuyu/tar-rs", rev = "9caa19369e6af332939421153843a22e31bc61b0" }
+tar = { git = "https://github.com/alexcrichton/tar-rs", rev = "860858be1ef65b3640c27ed752ea080995f86a64" }
 clap = "2.33"
 anyhow = "1.0"
-nix = "0.21"
+nix = "0.22"
 sha2 = "0.9"
 rayon = "1.5"
 libloading = "0.7"
