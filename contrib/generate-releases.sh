@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 _help_message() {
     printf "\
