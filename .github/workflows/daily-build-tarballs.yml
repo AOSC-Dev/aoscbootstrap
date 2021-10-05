@@ -5,86 +5,23 @@ on:
     - cron: '0 17 * * *'
   workflow_dispatch:
 
-env:
-  CARGO_TERM_COLOR: always
-
 jobs:
-  get-recipes:
-    runs-on: ubuntu-latest
+  build:
+    runs-on: [self-hosted, aosc-os, x64]
 
     steps:
-      - uses: actions/checkout@v2
-
-      - name: Build aoscbootstrap
-        run: cargo build --release --verbose
-
-      - name: Get recipes from repository
-        uses: actions/github-script@v5
-        id: get-recipes-from-repo
-        with:
-          script: |
-            let args = "";
-            const options = {};
-            options.listeners = {
-              stdout: (data) => {
-                args += data.toString();
-              }
-            };
-            await exec.exec('find', ['recipes', '-maxdepth', '1', '-name', '*.lst', '-not', '-name', '*retro*'], options);
-            const regex = /.*\/(.*).lst/gm;
-            const recipes = args.split('\n').map(arg => regex.exec(arg)).filter(arg => Array.isArray(arg)).map(arg => arg[1]);
-            if (!Array.isArray(recipes) || recipes.length == 0) throw "No recipes to build in the repository!";
-            return recipes;
-
-      - name: Tar files
-        run: |
-          tar -cvf aoscbootstrap.tar \
-            ./target/release/aoscbootstrap \
-            ./{config,contrib,recipes,scripts}
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: aoscbootstrap
-          path: aoscbootstrap.tar
-
-    outputs:
-      matrix: ${{steps.get-recipes-from-repo.outputs.result}}
-
-  build-tarballs:
-    needs: get-recipes
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        recipe: ${{fromJson(needs.get-recipes.outputs.matrix)}}
-      fail-fast: false
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Download artifact
-        uses: actions/download-artifact@v2
-        with:
-          name: aoscbootstrap
-
-      - name: Un-tar files
-        run: tar -xvf aoscbootstrap.tar .
-
       - name: Install aoscbootstrap
-        run: |
-          sudo mv target/release/aoscbootstrap /usr/local/bin
-          sudo mkdir -p /usr/local/share/aoscbootstrap
-          sudo mv {config,contrib,recipes,scripts} /usr/local/share/aoscbootstrap
-          sudo ln -s /usr/local/share/aoscbootstrap/contrib/generate-releases.sh /usr/local/bin/generate-releases
+        run: yes | sudo apt install -yf aoscbootstrap
 
       - name: Build tarballs
-        env:
-          RECIPE: ${{matrix.recipe}}
-          PREFIX: '/usr/local'
-        run: sudo -E generate-releases $RECIPE
+        run: sudo generate-releases buildkit container
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
-          name: os-amd64_${{matrix.recipe}}
+          name: os-amd64
           path: os-amd64
+
+      - name: Remove artifact
+        if: always()
+        run: sudo rm -rf os-amd64
