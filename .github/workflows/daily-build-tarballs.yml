@@ -16,11 +16,17 @@ jobs:
       - name: Build tarballs
         run: sudo generate-releases buildkit container
 
-      - name: Upload artifact
+      - name: Upload buildkit tarball
         uses: actions/upload-artifact@v2
         with:
-          name: os-amd64
-          path: os-amd64
+          name: os-amd64-buildkit
+          path: os-amd64/buildkit
+
+      - name: Upload container tarball
+        uses: actions/upload-artifact@v2
+        with:
+          name: os-amd64-container
+          path: os-amd64/container
 
       - name: Remove artifact
         if: always()
