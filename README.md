@@ -17,7 +17,7 @@ On AOSC OS, you may install these dependencies using the following command:
 ## Usage
 
 ```
-aoscbootstrap <branch> <path/to/target> --arch=<architecture> --include=[additional package] --include-file=[list of packages] [mirror URL]
+aoscbootstrap <branch> <path/to/target> --arch=<architecture> --config=<config> [--include=<additional package>] [--include-file=<list of packages>] [mirror URL]
 ```
 
 The `[mirror URL]` argument is optional, when omitted, the script defaults to `https://repo.aosc.io/debs`.
@@ -26,13 +26,13 @@ The `--include=` and `--include-file=` are optional, can be specified multiple t
 For example, to bootstrap a `amd64` architecture base system on the `stable` branch at `/root/aosc`, using `localhost` as the mirror:
 
 ```
-aoscbootstrap stable /root/aosc http://localhost/debs/ --arch=amd64
+aoscbootstrap stable /root/aosc http://localhost/debs/ --arch=amd64 --config=aosc-mainline.toml
 ```
 
 If you want to include additional packages, for example, add `network-base` and `systemd-base`:
 
 ```
-aoscbootstrap stable /root/aosc http://localhost/debs/ --arch=amd64 --include=network-base --include=systemd-base 
+aoscbootstrap stable /root/aosc http://localhost/debs/ --arch=amd64 --config=aosc-mainline.toml --include="network-base systemd-base"
 ```
 
 If you want to include even more packages, it is recommended to list them in a separate file like this:
@@ -47,7 +47,7 @@ editor-base
 Assume you have saved the file as `base.lst`, then you can use AOSCBootstrap like this:
 
 ```
-aoscbootstrap stable /root/aosc http://localhost/debs/ --arch=amd64 --include-file=base.lst
+aoscbootstrap stable /root/aosc http://localhost/debs/ --arch=amd64 --config=aosc-mainline.toml --include-file=base.lst
 ```
 
 ### Additional Features
