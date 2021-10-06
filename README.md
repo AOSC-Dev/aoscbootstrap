@@ -17,7 +17,7 @@ On AOSC OS, you may install these dependencies using the following command:
 ## Usage
 
 ```
-aoscbootstrap <branch> <path/to/target> --arch=<architecture> --config=<config> [--include=<additional package>] [--include-file=<list of packages>] [mirror URL]
+aoscbootstrap <branch> <path/to/target> --arch=<architecture> --config=<config> [--include=<additional packages>] [--include-file=<list of packages>] [mirror URL]
 ```
 
 The `[mirror URL]` argument is optional, when omitted, the script defaults to `https://repo.aosc.io/debs`.
