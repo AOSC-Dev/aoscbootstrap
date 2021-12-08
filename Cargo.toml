@@ -16,7 +16,7 @@ tar = "0.4"
 clap = "2.33"
 anyhow = "1.0"
 nix = "0.23"
-sha2 = "0.9"
+sha2 = "0.10"
 rayon = "1.5"
 libloading = "0.7"
 libsolv-sys = "0.1"
@@ -28,7 +28,7 @@ tempfile = "3.2"
 bytesize = "1.0"
 fs3 = "0.5"
 num_cpus = "1.13"
-owo-colors = "2.0"
+owo-colors = "^3"
 
 [profile.release]
 lto = true
