@@ -1,8 +1,9 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use nix::sys::stat::{makedev, mknod, Mode, SFlag};
 use nix::unistd::mkdir;
 use sha2::{Digest, Sha256};
 use std::path::Path;
+use std::process::Command;
 use std::{
     fs::{create_dir_all, write, File},
     io::Read,
@@ -39,6 +40,24 @@ pub fn archive_tarball(root: &Path, target: &Path, threads: u32) -> Result<()> {
     builder.append_dir_all(".", root)?;
     builder.finish()?;
     builder.into_inner()?.finish()?.sync_all()?;
+
+    Ok(())
+}
+
+/// Make a squashfs (xz compressed)
+pub fn archive_squashfs(root: &Path, target: &Path, threads: u32) -> Result<()> {
+    let output = Command::new("mksquashfs")
+        .arg(root)
+        .arg(target)
+        .arg("-comp")
+        .arg("xz")
+        .arg("-processors")
+        .arg(format!("{}", threads))
+        .spawn()?
+        .wait_with_output()?;
+    if !output.status.success() {
+        return Err(anyhow!("Failed to archive squashfs!"));
+    }
 
     Ok(())
 }
