@@ -53,6 +53,9 @@ struct Args {
     /// Export a xz compressed tar archive
     #[clap(long = "export-tar")]
     tar: Option<String>,
+    /// Export a xz compressed squashfs archive
+    #[clap(long = "export-squashfs")]
+    squashfs: Option<String>,
     /// Branch to use
     branch: String,
     /// Path to the destination
@@ -266,6 +269,13 @@ fn do_stage2(
         fs::archive_tarball(target_path, path, threads as u32)?;
         network::sha256sum_file_tag(path)?;
         eprintln!("Tarball available at {}", path.display().cyan());
+    }
+    if let Some(ref squashfs) = args.squashfs {
+        eprintln!("Compressing the squashfs, please wait patiently ...");
+        let path = Path::new(&squashfs);
+        fs::archive_squashfs(target_path, path, threads as u32)?;
+        network::sha256sum_file_tag(path)?;
+        eprintln!("SquashFS available at {}", path.display().cyan());
     }
 
     Ok(())
