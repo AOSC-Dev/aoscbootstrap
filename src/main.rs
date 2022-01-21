@@ -13,6 +13,7 @@ use std::{
     fs::File,
     io::{BufRead, BufReader, Write},
     path::Path,
+    process::exit,
 };
 
 const DEFAULT_MIRROR: &str = "https://repo.aosc.io/debs";
@@ -285,6 +286,10 @@ fn main() {
     let args = Args::parse();
     let target = &args.target;
     let mirror = &args.mirror;
+    if args.squashfs.is_some() && which::which("mksquashfs").is_err() {
+        eprintln!("Cannot find mksquashfs binary!");
+        exit(1)
+    }
     let mut arches = if args.arch.is_empty() {
         get_default_arch()
     } else {
