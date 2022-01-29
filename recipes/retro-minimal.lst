@@ -1,0 +1,2 @@
+%include retro/minimal-common.lst
+linux+kernel+retro+minimal

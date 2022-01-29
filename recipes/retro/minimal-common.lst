@@ -1,0 +1,9 @@
+admin-base
+alsa-utils
+boot-base
+core-base
+editor-base
+network-base
+systemd-base
+util-base
+web-base
