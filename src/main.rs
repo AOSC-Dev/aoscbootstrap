@@ -28,16 +28,16 @@ struct Args {
     #[clap(short = 'x', long)]
     clean: bool,
     /// Run specified custom scripts during stage 2 (after clean up, if any)
-    #[clap(short, long)]
+    #[clap(short, long, min_values = 1)]
     scripts: Option<Vec<String>>,
     /// CPU architectures to consider
-    #[clap(short, long)]
+    #[clap(short, long, min_values = 1)]
     arch: Vec<String>,
     /// Extra packages to include
-    #[clap(short, long)]
+    #[clap(short, long, min_values = 1)]
     include: Vec<String>,
     /// Extra packages to include (read from files)
-    #[clap(short = 'f', long = "include-files")]
+    #[clap(short = 'f', long = "include-files", min_values = 1)]
     include_files: Option<Vec<String>>,
     /// Only downloads packages, do not progress further
     #[clap(short = 'g', long = "download-only")]
@@ -46,7 +46,7 @@ struct Args {
     #[clap(short = '1', long = "stage1-only")]
     stage1: bool,
     /// Add additional components
-    #[clap(short = 'm', long)]
+    #[clap(short = 'm', long, min_values = 1)]
     comps: Vec<String>,
     /// Limit the number of parallel jobs
     #[clap(short = 'j', long)]
