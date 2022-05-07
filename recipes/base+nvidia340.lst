@@ -1,3 +1,0 @@
-%include base.lst
-nvidia+340
-nvidia-libgl+340
