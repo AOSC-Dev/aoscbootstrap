@@ -1,6 +1,7 @@
 use anyhow::{anyhow, Result};
-use nix::sys::stat::{makedev, mknod, Mode, SFlag};
-use nix::unistd::mkdir;
+use nix::fcntl::{open, OFlag};
+use nix::sys::stat::{fchmodat, makedev, mknod, FchmodatFlags, Mode, SFlag};
+use nix::unistd::{close, mkdir};
 use sha2::{Digest, Sha256};
 use std::path::Path;
 use std::process::Command;
@@ -18,13 +19,38 @@ pub fn bootstrap_apt(root: &Path, mirror: &str, branch: &str) -> Result<()> {
     create_dir_all(root.join("var/lib/dpkg"))?;
     create_dir_all(root.join("etc/apt"))?;
     create_dir_all(root.join("var/lib/apt/lists"))?;
-    File::create(root.join("var/lib/dpkg/available"))?;
-    File::create(root.join("var/lib/dpkg/status"))?;
     write(root.join("etc/locale.conf"), b"LANG=C.UTF-8\n")?;
     write(root.join("etc/shadow"), b"root:x:1:0:99999:7:::\n")?;
     write(
         root.join("etc/apt/sources.list"),
         format!("deb {} {} main\n", mirror, branch),
+    )?;
+
+    close(open(
+        &root.join("var/lib/dpkg/available"),
+        OFlag::O_CREAT,
+        Mode::from_bits_truncate(0o644),
+    )?)
+    .ok();
+    close(open(
+        &root.join("var/lib/dpkg/status"),
+        OFlag::O_CREAT,
+        Mode::from_bits_truncate(0o644),
+    )?)
+    .ok();
+    // chmod 0000 /etc/shadow
+    fchmodat(
+        None,
+        &root.join("etc/shadow"),
+        Mode::empty(),
+        FchmodatFlags::NoFollowSymlink,
+    )?;
+    // chmod 0644 /etc/apt/sources.list
+    fchmodat(
+        None,
+        &root.join("etc/apt/sources.list"),
+        Mode::from_bits_truncate(0o644),
+        FchmodatFlags::NoFollowSymlink,
     )?;
 
     Ok(())
