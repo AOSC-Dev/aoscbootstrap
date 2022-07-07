@@ -1,0 +1,2 @@
+%include ../mainline/mate-common.lst
+%include ../mainline/rpi64-common.lst

@@ -1,0 +1,2 @@
+%include ../mainline/xfce-common.lst
+%include ../mainline/rpi64-common.lst
