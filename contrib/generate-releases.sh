@@ -46,7 +46,7 @@ for i in $@; do
 	    --export-squashfs os-${ARCH:-$(dpkg --print-architecture)}/$i/aosc-os_${i}_$(date +%Y%m%d)_${ARCH:-$(dpkg --print-architecture)}.squashfs
     else
 	echo "Generating for Retro ..."
-        mkdir -pv os-${ARCH:-$(dpkg --print-architecture)}/$i
+        mkdir -pv os-${ARCH:-$(dpkg --print-architecture)}/${i/retro-/}
         aoscbootstrap \
             stable $i ${REPO:-https://repo.aosc.io/debs-retro} \
             --config /usr/share/aoscbootstrap/config/aosc-retro.toml \
@@ -54,8 +54,8 @@ for i in $@; do
             --arch ${ARCH:-$(dpkg --print-architecture)} \
             -s /usr/share/aoscbootstrap/scripts/reset-repo.sh \
             --include-files /usr/share/aoscbootstrap/recipes/$i.lst \
-	    --export-tar os-${ARCH:-$(dpkg --print-architecture)}/$i/aosc-os_${i}_$(date +%Y%m%d)_${ARCH:-$(dpkg --print-architecture)}.tar.xz \
-	    --export-squashfs os-${ARCH:-$(dpkg --print-architecture)}/$i/aosc-os_${i}_$(date +%Y%m%d)_${ARCH:-$(dpkg --print-architecture)}.squashfs
+	    --export-tar os-${ARCH:-$(dpkg --print-architecture)}/${i/retro-/}/aosc-os_${i/retro-/}_$(date +%Y%m%d)_${ARCH:-$(dpkg --print-architecture)}.tar.xz \
+	    --export-squashfs os-${ARCH:-$(dpkg --print-architecture)}/${i/retro-/}/aosc-os_${i/retro-/}_$(date +%Y%m%d)_${ARCH:-$(dpkg --print-architecture)}.squashfs
     fi
     rm -r $i
 
