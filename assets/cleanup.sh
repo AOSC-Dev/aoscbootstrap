@@ -33,6 +33,9 @@ WHITELIST="^/dev
     echo -e '\e[1mRemoving files ...\e[0m'
     xargs -L 1000 -a "$RM_FILES" rm -rfv
     rm -fv "$ALL_FILES" "$DPKG_FILES" "$RM_FILES"
+    # Remove some extra files that absolutely should not be in the release files.
+    echo -e '\e[1mRemoving sensitive files ...\e[0m'
+    rm -fv /etc/machine-id
 }
 
 set -eo pipefail
