@@ -1,4 +1,5 @@
 stub-packages = [
+  "aosc-aaa",
   "apt",
   "gcc-runtime",
   "tar",
@@ -8,6 +9,7 @@ stub-packages = [
   "ca-certs",
   "iptables",
   "shadow",
+  "systemd",
   "keyutils"
 ]
 base-packages = [
