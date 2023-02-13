@@ -1,21 +1,21 @@
 #!/bin/bash
 
 _help_message() {
-    printf "\
+    printf '\
 Usage:
 
-        generate-releases.sh VARIANTS
+    generate-releases.sh VARIANTS
 
-	        - VARIANTS: A list of variants to generate
-                  (e.g. cinnamon gnome kde lxde mate xfce).
+        - VARIANTS: A list of variants to generate (e.g., desktop).
 
-	Optional variables:
+    Optional variables:
 
-		- ARCH: Define tarball architecture
-                  (falls back to dpkg architecture).
-                - REPO: Repository mirror to use.
+        - ARCH: Tarball architecture (defaults to dpkg architecture).
+        - REPO: Repository mirror to use.
+        - RETRO: Generate Retro releases (assign 1 to enable).
+        - STAGE2: Stage2 mode (assign 1 to enable, uses $ARCH-bring-up branch).
 
-"
+'
 }
 
 if [[ $# -eq 0 || "$1" == "--help" || "$1" == "-h" ]]; then
