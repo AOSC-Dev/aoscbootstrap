@@ -52,10 +52,10 @@ pub fn extract_deb<R: Read>(reader: R, target: &Path) -> Result<()> {
 
 pub fn read_config<P: AsRef<Path>>(path: P) -> Result<Config> {
     let mut f = File::open(path)?;
-    let mut content = Vec::new();
+    let mut content = String::new();
     content.reserve(4096);
-    f.read_to_end(&mut content)?;
-    let config = toml::from_slice(&content)?;
+    f.read_to_string(&mut content)?;
+    let config = toml::from_str(&content)?;
 
     Ok(config)
 }
