@@ -194,7 +194,7 @@ fn include_extra_scripts<W: Write>(
         eprintln!("Including {} extra scripts ...", scripts.len().bold());
         output.write_all(b"\necho 'Running additional scripts ...';")?;
         for s in scripts {
-            let mut f = File::open(&s)?;
+            let mut f = File::open(s)?;
             output.write_all(format!("\n# === {}\n", &s).as_bytes())?;
             std::io::copy(&mut f, output)?;
         }
@@ -302,7 +302,7 @@ fn main() {
     let client = network::make_new_client().unwrap();
     let target_path = Path::new(target);
     let archive_path = target_path.join("var/cache/apt/archives");
-    let threads = args.jobs.unwrap_or_else(|| num_cpus::get());
+    let threads = args.jobs.unwrap_or_else(num_cpus::get);
     if target_path.exists() {
         panic!(
             "{}",
@@ -316,7 +316,7 @@ fn main() {
     }
     let mut extra_packages = args.include.clone();
     if let Some(ref extra_files) = args.include_files {
-        let extras = collect_packages_from_lists(&extra_files).unwrap();
+        let extras = collect_packages_from_lists(extra_files).unwrap();
         eprintln!(
             "Read {} extra packages from the lists.",
             extras.len().cyan().bold()
@@ -359,7 +359,7 @@ fn main() {
     let all_packages = t.create_metadata().unwrap();
     eprintln!(
         "Total installed size: {}",
-        ByteSize::kb(t.get_size_change().abs() as u64).cyan().bold()
+        ByteSize::kb(t.get_size_change().unsigned_abs()).cyan().bold()
     );
     check_disk_usage(t.get_size_change() as u64, target_path).unwrap();
     eprintln!("Downloading packages ...");

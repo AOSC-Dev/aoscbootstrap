@@ -84,7 +84,7 @@ fn chroot_do(target: &str, args: &[&str]) -> Result<()> {
 /// Execute a command in the container
 fn execute_container_command(ns_name: &str, args: &[&str]) -> Result<i32> {
     let exit_code = Command::new("systemd-run")
-        .args(&["-M", ns_name, "-qt", "--"])
+        .args(["-M", ns_name, "-qt", "--"])
         .args(args)
         .spawn()?
         .wait()?
@@ -97,7 +97,7 @@ fn execute_container_command(ns_name: &str, args: &[&str]) -> Result<i32> {
 fn nspawn_do(target: &str, args: &[&str]) -> Result<()> {
     let ns_name = format!("bootstrap-{:x}", random::<u32>());
     let mut child = Command::new("systemd-nspawn")
-        .args(&["-qbD", target, "-M", &ns_name, "--"])
+        .args(["-qbD", target, "-M", &ns_name, "--"])
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .spawn()?;
@@ -107,7 +107,7 @@ fn nspawn_do(target: &str, args: &[&str]) -> Result<()> {
 
     eprintln!("Powering off the container ...");
     Command::new("machinectl")
-        .args(&["poweroff", &ns_name])
+        .args(["poweroff", &ns_name])
         .status()?;
 
     if status != 0 {
