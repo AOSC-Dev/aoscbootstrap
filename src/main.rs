@@ -359,7 +359,9 @@ fn main() {
     let all_packages = t.create_metadata().unwrap();
     eprintln!(
         "Total installed size: {}",
-        ByteSize::kb(t.get_size_change().unsigned_abs()).cyan().bold()
+        ByteSize::kb(t.get_size_change().unsigned_abs())
+            .cyan()
+            .bold()
     );
     check_disk_usage(t.get_size_change() as u64, target_path).unwrap();
     eprintln!("Downloading packages ...");
@@ -371,6 +373,12 @@ fn main() {
     }
 
     let st = solv::calculate_deps(&mut pool, &config.stub_packages).unwrap();
+    let main_arch = arches
+        .iter()
+        .find(|a| **a != "all")
+        .expect("Did not find the main architecture");
+    install::generate_apt_extended_state(target_path, &all_stages, &all_packages, main_arch)
+        .expect("Unable to generate APT extended state");
     let script =
         match do_stage1(st, target_path, mirror, &args, archive_path, all_packages).unwrap() {
             Some(value) => value,

@@ -1,6 +1,7 @@
 use std::{
+    collections::HashSet,
     fs::File,
-    io::{Read, Write},
+    io::{BufWriter, Read, Write},
     path::Path,
 };
 
@@ -10,6 +11,8 @@ use serde::Deserialize;
 use tar::Archive as TarArchive;
 use tempfile::NamedTempFile;
 use xz2::read::XzDecoder;
+
+use crate::solv::PackageMeta;
 
 const BOOTSTRAP_PACK: &[u8] = include_bytes!("../assets/etc-bootstrap.tar.xz");
 const INSTALL_SCRIPT_TPL: &str = include_str!("../assets/bootstrap.sh");
@@ -74,6 +77,34 @@ fn generate_dpkg_install_script(packages: &[String]) -> String {
     }
 
     INSTALL_SCRIPT_TPL.replacen("{}", &package_list, 1)
+}
+
+pub fn generate_apt_extended_state(
+    target: &Path,
+    manual_pkgs: &[String],
+    all_packages: &[PackageMeta],
+    main_arch: &str,
+) -> Result<()> {
+    let extended_state = File::create(target.join("var/lib/apt/extended_states"))?;
+    let mut extended_state = BufWriter::new(extended_state);
+    let mut manual_installed = HashSet::new();
+
+    for p in manual_pkgs {
+        manual_installed.insert(p);
+    }
+
+    for pkg in all_packages {
+        if manual_installed.contains(&pkg.name) {
+            continue;
+        }
+        writeln!(
+            &mut extended_state,
+            "Package: {}\nArchitecture: {}\nAuto-Installed: 1\n",
+            pkg.name, main_arch
+        )?;
+    }
+
+    Ok(())
 }
 
 pub fn write_install_script(
