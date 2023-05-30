@@ -3,6 +3,6 @@ if command -v apt-gen-list > /dev/null; then
 	apt-gen-list reset-mirror
 else
 	cat > /etc/apt/sources.list << EOF
-deb https://repo.aosc.io/debs stable main
+deb https://repo.aosc.io/debs ${BRANCH:-stable} main
 EOF
 fi
