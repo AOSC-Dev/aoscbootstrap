@@ -11,6 +11,7 @@ Usage:
     Optional variables:
 
         - ARCH: Tarball architecture (defaults to dpkg architecture).
+        - BRANCH: Branch to use.
         - REPO: Repository mirror to use.
         - RETRO: Generate Retro releases (assign 1 to enable).
         - STAGE2: Stage2 mode (assign 1 to enable, uses $ARCH-bring-up branch).
@@ -33,7 +34,7 @@ for i in $@; do
 	if [[ "$STAGE2" != "1" ]]; then
 		echo "Generating mainline release ($i) ..."
 	        aoscbootstrap \
-		    stable $i ${REPO:-https://repo.aosc.io/debs} \
+		    ${BRANCH:-stable} $i ${REPO:-https://repo.aosc.io/debs} \
 	            --config /usr/share/aoscbootstrap/config/aosc-mainline.toml \
 	            -x \
 	            --arch ${ARCH:-$(dpkg --print-architecture)} \
@@ -68,7 +69,7 @@ for i in $@; do
 		echo "Generating Retro release ($i) ..."
 	        mkdir -pv os-${ARCH:-$(dpkg --print-architecture)}/${i/retro-/}
 	        aoscbootstrap \
-	            stable $i ${REPO:-https://repo.aosc.io/debs-retro} \
+	            ${BRANCH:-stable} $i ${REPO:-https://repo.aosc.io/debs-retro} \
 	            --config /usr/share/aoscbootstrap/config/aosc-retro.toml \
 	            -x \
 	            --arch ${ARCH:-$(dpkg --print-architecture)} \
