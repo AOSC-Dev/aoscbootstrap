@@ -1,0 +1,15 @@
+admin-base
+aosc-os-presets-base
+audio-base
+boot-base
+core-base
+editor-base
+kmscon-base
+network-base
+systemd-base
+util-base
+web-base
+tde-base
+trinity-default-settings
+x11-base
+sylpheed
