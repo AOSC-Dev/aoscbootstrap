@@ -133,7 +133,10 @@ fn batch_download_inner(pkgs: &[PackageMeta], mirror: &str, root: &Path) -> Resu
                     total,
                     pkg.name
                 );
-                if sha256sum_file(&path).is_err() {
+                if !sha256sum_file(&path)
+                    .map(|x| x == pkg.sha256)
+                    .unwrap_or(false)
+                {
                     std::fs::remove_file(path).ok();
                     error.store(true, Ordering::SeqCst);
                     eprintln!("Verification failed: {}", pkg.name);
