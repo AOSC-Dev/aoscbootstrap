@@ -149,7 +149,8 @@ fn collect_packages_from_list<P: AsRef<Path>>(
     if depth > 32 {
         return Err(anyhow!("Recursion limit exceeded. Is there a loop?"));
     }
-    let f = File::open(path.as_ref())?;
+    let f = File::open(path.as_ref())
+        .context(format!("Failed to open file: {}", path.as_ref().display()))?;
     let reader = BufReader::new(f);
     for line in reader.lines() {
         let line = line?;
