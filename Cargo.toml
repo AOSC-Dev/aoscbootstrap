@@ -3,7 +3,7 @@ name = "aoscbootstrap"
 version = "0.2.9"
 description = "Helper for bootstrapping AOSC OS from scratch"
 authors = ["liushuyu <liushuyu011@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 
 [dependencies]
