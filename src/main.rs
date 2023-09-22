@@ -218,7 +218,7 @@ fn check_disk_usage(required: u64, target: &Path) -> Result<()> {
 fn do_stage1(
     st: solv::Transaction,
     target_path: &Path,
-    mirror: &String,
+    mirror: &str,
     args: &Args,
     archive_path: std::path::PathBuf,
     all_packages: Vec<PackageMeta>,
@@ -253,7 +253,7 @@ fn do_stage2(
     t: solv::Transaction,
     target_path: &Path,
     script: tempfile::NamedTempFile,
-    target: &String,
+    target: &str,
     args: &Args,
     threads: usize,
 ) -> Result<()> {
