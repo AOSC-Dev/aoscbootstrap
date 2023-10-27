@@ -1,0 +1,45 @@
+#!/bin/bash
+
+_help_message() {
+    printf '\
+Usage:
+
+    generate-emukit
+
+    Optional variables:
+
+        - ARCH: Tarball architecture (defaults to dpkg architecture).
+        - BRANCH: Branch to use.
+        - REPO: Repository mirror to use.
+
+'
+}
+
+if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+    _help_message
+    exit 0
+fi
+
+export TZ='UTC'
+
+mkdir -pv os-${ARCH:-$(dpkg --print-architecture)}/emukit
+
+echo "Generating EmuKit ($ARCH) ..."
+aoscbootstrap \
+	${BRANCH:-stable} emukit ${REPO:-https://repo.aosc.io/debs} \
+	--config /usr/share/aoscbootstrap/config/aosc-mainline.toml \
+	-x \
+	--arch ${ARCH:-$(dpkg --print-architecture)} \
+	-s \
+		/usr/share/aoscbootstrap/scripts/reset-repo.sh \
+	-s \
+		/usr/share/aoscbootstrap/scripts/enable-nvidia-drivers.sh \
+	-s \
+		/usr/share/aoscbootstrap/scripts/enable-dkms.sh \
+	-s \
+		/usr/share/aoscbootstrap/scripts/emukit.sh \
+	--include-files /usr/share/aoscbootstrap/recipes/emukit.lst \
+	--export-tar os-${ARCH:-$(dpkg --print-architecture)}/emukit/aosc-os_emukit_$(date +%Y%m%d)_${ARCH:-$(dpkg --print-architecture)}.tar.xz \
+	--export-squashfs os-${ARCH:-$(dpkg --print-architecture)}/emukit/aosc-os_emukit_$(date +%Y%m%d)_${ARCH:-$(dpkg --print-architecture)}.squashfs
+
+rm -r emukit
