@@ -15,3 +15,7 @@ ln -sv ../opt /usr/opt
 rm -v /lib/ld-linux.so.2
 ln -sv ../opt/32/lib/ld-linux.so.2 \
     /lib/ld-linux.so.2
+
+# Note: This breaks build with Ciel (from within nspawn).
+echo "Dropping all /dev nodes ..."
+rm -rv /dev/*
