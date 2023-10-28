@@ -29,6 +29,8 @@ export TZ='UTC'
 mkdir -pv os-${ARCH:-$(dpkg --print-architecture)}
 
 for i in $@; do
+    rm -r $i
+
     if [[ "$RETRO" != "1" ]]; then
         mkdir -pv os-${ARCH:-$(dpkg --print-architecture)}/$i
 	if [[ "$STAGE2" != "1" ]]; then

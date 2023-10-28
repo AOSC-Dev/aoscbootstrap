@@ -24,6 +24,8 @@ export TZ='UTC'
 
 mkdir -pv os-${ARCH:-$(dpkg --print-architecture)}/emukit
 
+rm -r emukit
+
 echo "Generating EmuKit ($ARCH) ..."
 aoscbootstrap \
 	${BRANCH:-stable} emukit ${REPO:-https://repo.aosc.io/debs} \
