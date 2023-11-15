@@ -25,7 +25,9 @@ WHITELIST="^/dev
     PATTERN_FILES="$(mktemp)"
     echo -e '\e[1mCollecting files from dpkg ...\e[0m'
     # Accessing /proc causes race conditions. Better to avoid accessing pseudo filesystems.
-    find / -mindepth 2 -regextype egrep -not -regex '^/(proc|sys|dev|tmp|run)/.*' >> "$ALL_FILES" &
+    # Note: using `-not -regex' does not prevent find from accessing them.
+    # `-prune` is more flexible, but `-mount` would be better.
+    find / -mindepth 2 \( -path '/sys/*' -o -path '/proc/*' -o -path '/dev/*' -o -path '/tmp/*' -o -path '/run/*' \) -prune -o -print >> "$ALL_FILES"
     FIND_PID="$!"
     cat /var/lib/dpkg/info/*.list > "$DPKG_FILES"
     wait "$FIND_PID"
