@@ -1,6 +1,6 @@
 [package]
 name = "aoscbootstrap"
-version = "0.3.1"
+version = "0.3.3"
 description = "Helper for bootstrapping AOSC OS from scratch"
 authors = ["liushuyu <liushuyu011@gmail.com>"]
 edition = "2021"
