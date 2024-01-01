@@ -52,8 +52,11 @@ struct Args {
     #[clap(short = 'j', long)]
     jobs: Option<usize>,
     /// Export a xz compressed tar archive
-    #[clap(long = "export-tar")]
-    tar: Option<String>,
+    #[clap(long = "export-tar-xz")]
+    tar_xz: Option<String>,
+    /// Export a gz compressed tar archive
+    #[clap(long = "export-tar-gz")]
+    tar_gz: Option<String>,
     /// Export a xz compressed squashfs archive
     #[clap(long = "export-squashfs")]
     squashfs: Option<String>,
@@ -265,10 +268,17 @@ fn do_stage2(
     drop(script);
     nix::unistd::sync();
     eprintln!("{}", "Stage 2 finished.\nBase system ready!".green().bold());
-    if let Some(ref tar) = args.tar {
-        eprintln!("Compressing the tarball, please wait patiently ...");
-        let path = Path::new(&tar);
-        fs::archive_tarball(target_path, path, threads as u32)?;
+    if let Some(ref xz) = args.tar_xz {
+        eprintln!("Compressing the xz tarball, please wait patiently ...");
+        let path = Path::new(&xz);
+        fs::archive_xz_tarball(target_path, path, threads as u32)?;
+        network::sha256sum_file_tag(path)?;
+        eprintln!("Tarball available at {}", path.display().cyan());
+    }
+    if let Some(ref gz) = args.tar_gz {
+        eprintln!("Compressing the gz tarball, please wait patiently ...");
+        let path = Path::new(&gz);
+        fs::archive_gz_tarball(target_path, path)?;
         network::sha256sum_file_tag(path)?;
         eprintln!("Tarball available at {}", path.display().cyan());
     }

@@ -1,8 +1,11 @@
 use anyhow::{anyhow, Result};
+use flate2::write::GzEncoder;
+use flate2::Compression;
 use nix::fcntl::{open, OFlag};
 use nix::sys::stat::{fchmodat, makedev, mknod, FchmodatFlags, Mode, SFlag};
 use nix::unistd::{close, mkdir};
 use sha2::{Digest, Sha256};
+use std::io::Write;
 use std::path::Path;
 use std::process::Command;
 use std::{
@@ -57,17 +60,32 @@ pub fn bootstrap_apt(root: &Path, mirror: &str, branch: &str) -> Result<()> {
 }
 
 /// Make a tarball (xz compressed)
-pub fn archive_tarball(root: &Path, target: &Path, threads: u32) -> Result<()> {
+pub fn archive_xz_tarball(root: &Path, target: &Path, threads: u32) -> Result<()> {
     let f = File::create(target)?;
     let xz = build_xz_encoder(threads)?;
-    let mut builder = Builder::new(XzEncoder::new_stream(f, xz));
+    let builder = build_tarball_stream(XzEncoder::new_stream(f, xz), root)?;
+    builder.into_inner()?.finish()?.sync_all()?;
+
+    Ok(())
+}
+
+/// Make a tarball (gz compressed)
+pub fn archive_gz_tarball(root: &Path, target: &Path) -> Result<()> {
+    let f = File::create(target)?;
+    let builder = build_tarball_stream(GzEncoder::new(f, Compression::best()), root)?;
+    builder.into_inner()?.finish()?.sync_all()?;
+
+    Ok(())
+}
+
+fn build_tarball_stream<W: Write>(stream: W, root: &Path) -> Result<Builder<W>, anyhow::Error> {
+    let mut builder = Builder::new(stream);
     builder.mode(tar::HeaderMode::Complete);
     builder.follow_symlinks(false);
     builder.append_dir_all(".", root)?;
     builder.finish()?;
-    builder.into_inner()?.finish()?.sync_all()?;
 
-    Ok(())
+    Ok(builder)
 }
 
 /// Make a squashfs (xz compressed)
@@ -78,7 +96,7 @@ pub fn archive_squashfs(root: &Path, target: &Path, threads: u32) -> Result<()> 
         .arg("-comp")
         .arg("xz")
         .arg("-processors")
-        .arg(format!("{}", threads))
+        .arg(threads.to_string())
         .spawn()?
         .wait_with_output()?;
     if !output.status.success() {
