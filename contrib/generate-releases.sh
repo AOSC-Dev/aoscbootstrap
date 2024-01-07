@@ -63,14 +63,8 @@ for i in $@; do
 						/usr/share/aoscbootstrap/scripts/enable-nvidia-drivers.sh \
 					-s \
 						/usr/share/aoscbootstrap/scripts/enable-dkms.sh \
-					--include-files /usr/share/aoscbootstrap/recipes/$i.lst
-				mkdir -pv os-${ARCH:-$(dpkg --print-architecture)}/$i/
-				cd $i
-				tar czf \
-					../os-${ARCH:-$(dpkg --print-architecture)}/$i/aosc-os_${i}_$(date +%Y%m%d)_${ARCH:-$(dpkg --print-architecture)}.tar.gz \
-					*
-				cd ..
-				echo "WSL system release is available at: os-${ARCH:-$(dpkg --print-architecture)}/$i/aosc-os_${i}_$(date +%Y%m%d)_${ARCH:-$(dpkg --print-architecture)}.tar.gz"
+					--include-files /usr/share/aoscbootstrap/recipes/$i.lst \
+					--export-tar-gz os-${ARCH:-$(dpkg --print-architecture)}/$i/aosc-os_${i}_$(date +%Y%m%d)_${ARCH:-$(dpkg --print-architecture)}.tar.gz
 			fi
 		else
 			echo "Generating mainline release ($i, stage2) ..."
