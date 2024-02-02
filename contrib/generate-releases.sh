@@ -59,10 +59,6 @@ for i in $@; do
 					--arch ${ARCH:-$(dpkg --print-architecture)} \
 					-s \
 						/usr/share/aoscbootstrap/scripts/reset-repo.sh \
-					-s \
-						/usr/share/aoscbootstrap/scripts/enable-nvidia-drivers.sh \
-					-s \
-						/usr/share/aoscbootstrap/scripts/enable-dkms.sh \
 					--include-files /usr/share/aoscbootstrap/recipes/$i.lst \
 					--export-tar-gz os-${ARCH:-$(dpkg --print-architecture)}/$i/aosc-os_${i}_$(date +%Y%m%d)_${ARCH:-$(dpkg --print-architecture)}.tar.gz
 			fi
