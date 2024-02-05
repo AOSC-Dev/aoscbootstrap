@@ -19,7 +19,7 @@ echo -e "\e[1m\e[96m[$count_c/$length_c] Configuring $package...\e[0m";count_c=$
 fi
     done
 }
-{ dpkg --status-fd=7 --configure --pending --force-configure-any --force-depends 7>&1 >&8 | dpkg_progress; } 8>&1 \
+{ DEBIAN_FRONTEND=noninteractive dpkg --status-fd=7 --configure --pending --force-configure-any --force-depends 7>&1 >&8 | dpkg_progress; } 8>&1 \
 || { echo 'Configuring missed packages ...'; dpkg --configure -a; }
 echo -e '\e[1m\e[94mCopying skeleton files ...\e[0m'
 cp -rvT /etc/skel /root
