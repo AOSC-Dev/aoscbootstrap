@@ -8,6 +8,8 @@ use anyhow::{anyhow, Context, Result};
 use bytesize::ByteSize;
 use clap::Parser;
 use owo_colors::colored::*;
+use resolvo::DefaultSolvableDisplay;
+use resolvo_deb::DebSolver;
 use solv::PackageMeta;
 use std::{
     fs::File,
@@ -333,6 +335,10 @@ fn main() {
             extras.len().cyan().bold()
         );
         extra_packages.extend(extras);
+        extra_packages = extra_packages
+            .into_iter()
+            .filter(|x| !x.starts_with("%include "))
+            .collect();
     }
     // append the `noarch` architecture if it does not exist.
     // this is to avoid confusing issues with dependency resolving.
@@ -364,6 +370,21 @@ fn main() {
     let mut all_stages = config.stub_packages.clone();
     all_stages.extend(config.base_packages);
     all_stages.extend(extra_packages);
+
+    let mut s = String::new();
+    for i in &paths {
+        let f = std::fs::read_to_string(i).unwrap();
+        s.push_str(&f);
+    }
+
+    let mut solver = DebSolver::new(&s);
+    if let Err(e) = solver.solve(all_stages.clone()) {
+        eprintln!(
+            "Maybe is a problem: {}",
+            e.display_user_friendly(&solver.0, &DefaultSolvableDisplay)
+        );
+    };
+
     let mut pool = solv::Pool::new();
     solv::populate_pool(&mut pool, &paths).unwrap();
     let t = solv::calculate_deps(&mut pool, &all_stages).unwrap();
