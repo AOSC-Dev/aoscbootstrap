@@ -1,7 +1,7 @@
 mod ffi;
 use std::path::PathBuf;
 
-use anyhow::Result;
+use anyhow::{bail, Result};
 pub use ffi::{Pool, Queue, Repo, Solver, Transaction, SOLVER_FLAG_BEST_OBEY_POLICY};
 
 #[derive(Clone, Debug)]
@@ -21,7 +21,12 @@ pub fn calculate_deps(pool: &mut Pool, names: &[String]) -> Result<Transaction> 
     q.mark_all_for_install();
     let mut solver = Solver::new(pool);
     solver.set_flag(SOLVER_FLAG_BEST_OBEY_POLICY, 1)?;
-    solver.solve(&mut q)?;
+
+    if let Err(e) = solver.solve(&mut q) {
+        eprintln!("{e}");
+        bail!("{}", solver.get_problems()?.join("\n"));
+    }
+
     let trans = solver.create_transaction()?;
     trans.order(0);
 

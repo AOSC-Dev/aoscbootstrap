@@ -240,6 +240,20 @@ impl Solver {
 
         Ok(())
     }
+
+    pub fn get_problems(&self) -> Result<Vec<String>> {
+        let mut problems = Vec::new();
+        let count = unsafe { ffi::solver_problem_count(self.solver) };
+        for i in 1..=count {
+            let problem = unsafe { ffi::solver_problem2str(self.solver, i as c_int) };
+            if problem.is_null() {
+                return Err(anyhow!("problem2str failed: {}", i));
+            }
+            problems.push(unsafe { CStr::from_ptr(problem).to_string_lossy().to_string() });
+        }
+
+        Ok(problems)
+    }
 }
 
 impl Drop for Solver {
