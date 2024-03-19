@@ -109,10 +109,7 @@ fn batch_download_inner(pkgs: &[PackageMeta], mirror: &str, root: &Path) -> Resu
     pkgs.par_iter().for_each_init(
         move || client.clone(),
         |client, pkg| {
-            let package = &pkg.name;
-            let version = &pkg.version.replace(':', "%3a");
-            let arch = &pkg.arch;
-            let filename = format!("{package}_{version}_{arch}.deb").replace("%2b", "+");
+            let filename = pkg.file_name();
             count.fetch_add(1, Ordering::SeqCst);
             println!(
                 "[{}/{}] Downloading {}...",

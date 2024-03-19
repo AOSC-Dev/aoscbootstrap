@@ -13,6 +13,16 @@ pub struct PackageMeta {
     pub arch: String,
 }
 
+impl PackageMeta {
+    /// Return apt-style file name for this package
+    pub fn file_name(&self) -> String {
+        let package = &self.name;
+        let version = &self.version.replace(':', "%3a");
+        let arch = &self.arch;
+        format!("{package}_{version}_{arch}.deb").replace("%2b", "+")
+    }
+}
+
 /// Simulate the apt dependency resolution
 pub fn calculate_deps(pool: &mut Pool, names: &[String]) -> Result<Transaction> {
     let mut q = Queue::new();

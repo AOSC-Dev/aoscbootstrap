@@ -119,9 +119,7 @@ fn extract_packages(packages: &[PackageMeta], target: &Path, archive_path: &Path
     let mut count = 0usize;
     for package in packages {
         count += 1;
-        let filename = Path::new(&package.path)
-            .file_name()
-            .ok_or_else(|| anyhow!("Unable to determine package filename"))?;
+        let filename = package.file_name();
         eprintln!(
             "[{}/{}] Extracting {} ...",
             count,
@@ -180,13 +178,7 @@ fn collect_packages_from_list<P: AsRef<Path>>(
 fn collect_filenames(packages: &[PackageMeta]) -> Result<Vec<String>> {
     let mut output = Vec::new();
     for package in packages {
-        output.push(
-            Path::new(&package.path)
-                .file_name()
-                .ok_or_else(|| anyhow!("Unable to determine package filename"))?
-                .to_string_lossy()
-                .to_string(),
-        );
+        output.push(package.file_name());
     }
 
     Ok(output)
