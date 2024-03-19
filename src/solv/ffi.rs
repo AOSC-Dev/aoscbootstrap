@@ -65,7 +65,7 @@ fn solvable_to_meta(s: *mut ffi::Solvable) -> Result<PackageMeta> {
     let arch = unsafe {
         CStr::from_ptr(ffi::solvable_lookup_str(
             s,
-            ffi::solv_knownid_DELTA_PACKAGE_ARCH as i32,
+            ffi::solv_knownid_SOLVABLE_ARCH as i32,
         ))
     };
 
