@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Result};
 use rayon::prelude::*;
 use reqwest::blocking::Client;
-use std::{fs::File, io::Write, path::PathBuf};
+use std::{fs::File, io::Write};
 use std::{
     path::Path,
     sync::{Arc, Mutex},
@@ -109,7 +109,10 @@ fn batch_download_inner(pkgs: &[PackageMeta], mirror: &str, root: &Path) -> Resu
     pkgs.par_iter().for_each_init(
         move || client.clone(),
         |client, pkg| {
-            let filename = PathBuf::from(pkg.path.clone());
+            let package = &pkg.name;
+            let version = &pkg.version.replace(':', "%3a");
+            let arch = &pkg.arch;
+            let filename = format!("{package}_{version}_{arch}.deb").replace("%2b", "+");
             count.fetch_add(1, Ordering::SeqCst);
             println!(
                 "[{}/{}] Downloading {}...",
@@ -117,33 +120,29 @@ fn batch_download_inner(pkgs: &[PackageMeta], mirror: &str, root: &Path) -> Resu
                 total,
                 pkg.name
             );
-            if let Some(filename) = filename.file_name() {
-                let path = root.join(filename);
-                if !path.is_file()
-                    && fetch_url(client, &format!("{}/{}", mirror, pkg.path), &path).is_err()
-                {
-                    error.store(true, Ordering::SeqCst);
-                    eprintln!("Download failed: {}", pkg.name);
-                    return;
-                }
-                count.fetch_add(1, Ordering::SeqCst);
-                println!(
-                    "[{}/{}] Verifying {}...",
-                    count.load(Ordering::SeqCst),
-                    total,
-                    pkg.name
-                );
-                if !sha256sum_file(&path)
-                    .map(|x| x == pkg.sha256)
-                    .unwrap_or(false)
-                {
-                    std::fs::remove_file(path).ok();
-                    error.store(true, Ordering::SeqCst);
-                    eprintln!("Verification failed: {}", pkg.name);
-                }
-            } else {
+
+            let path = root.join(filename);
+            if !path.is_file()
+                && fetch_url(client, &format!("{}/{}", mirror, pkg.path), &path).is_err()
+            {
                 error.store(true, Ordering::SeqCst);
-                eprintln!("Filename unknown: {}", pkg.name);
+                eprintln!("Download failed: {}", pkg.name);
+                return;
+            }
+            count.fetch_add(1, Ordering::SeqCst);
+            println!(
+                "[{}/{}] Verifying {}...",
+                count.load(Ordering::SeqCst),
+                total,
+                pkg.name
+            );
+            if !sha256sum_file(&path)
+                .map(|x| x == pkg.sha256)
+                .unwrap_or(false)
+            {
+                std::fs::remove_file(path).ok();
+                error.store(true, Ordering::SeqCst);
+                eprintln!("Verification failed: {}", pkg.name);
             }
         },
     );

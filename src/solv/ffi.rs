@@ -62,12 +62,19 @@ fn solvable_to_meta(s: *mut ffi::Solvable) -> Result<PackageMeta> {
             ffi::solv_knownid_SOLVABLE_MEDIAFILE as i32,
         ))
     };
+    let arch = unsafe {
+        CStr::from_ptr(ffi::solvable_lookup_str(
+            s,
+            ffi::solv_knownid_DELTA_PACKAGE_ARCH as i32,
+        ))
+    };
 
     Ok(PackageMeta {
         name: name.to_string_lossy().to_string(),
         version: version.to_string_lossy().to_string(),
         sha256: encode(checksum),
         path: path.to_string_lossy().to_string() + "/" + &filename.to_string_lossy(),
+        arch: arch.to_string_lossy().to_string(),
     })
 }
 

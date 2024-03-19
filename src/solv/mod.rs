@@ -10,6 +10,7 @@ pub struct PackageMeta {
     pub version: String,
     pub sha256: String,
     pub path: String,
+    pub arch: String,
 }
 
 /// Simulate the apt dependency resolution
