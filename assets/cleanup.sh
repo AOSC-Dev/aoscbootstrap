@@ -1,8 +1,7 @@
 #!/bin/bash -e
 # === cleanup.sh
 remove_files () {
-WHITELIST="^/dev
-^/efi
+WHITELIST="^/efi
 ^/etc
 ^/run
 ^/usr
