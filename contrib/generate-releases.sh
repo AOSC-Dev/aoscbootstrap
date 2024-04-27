@@ -47,6 +47,8 @@ for i in $@; do
 						/usr/share/aoscbootstrap/scripts/enable-nvidia-drivers.sh \
 					-s \
 						/usr/share/aoscbootstrap/scripts/enable-dkms.sh \
+					-s \
+						/usr/share/aoscbootstrap/scripts/desktop.sh \
 					--include-files /usr/share/aoscbootstrap/recipes/$i.lst \
 					--export-tar-xz os-${ARCH:-$(dpkg --print-architecture)}/$i/aosc-os_${i}_$(date +%Y%m%d)_${ARCH:-$(dpkg --print-architecture)}.tar.xz \
 					--export-squashfs os-${ARCH:-$(dpkg --print-architecture)}/$i/aosc-os_${i}_$(date +%Y%m%d)_${ARCH:-$(dpkg --print-architecture)}.squashfs
