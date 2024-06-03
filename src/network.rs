@@ -1,7 +1,6 @@
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Context, Result};
 use rayon::prelude::*;
 use reqwest::blocking::Client;
-use reqwest::StatusCode;
 use std::{fs::File, io::Write};
 use std::{
     path::Path,
@@ -45,17 +44,11 @@ pub fn fetch_url(client: &Client, url: &str, path: &Path) -> Result<()> {
 }
 
 #[inline]
-fn combination<'a, 'b, 'c>(
-    a: &'a [&str],
-    b: &'b [&str],
-    c: &'c [&str],
-) -> Vec<(&'a str, &'b str, &'c str)> {
+fn combination<'a, 'b>(a: &'a [&str], b: &'b [&str]) -> Vec<(&'a str, &'b str)> {
     let mut ret = Vec::new();
     for i in a {
         for j in b {
-            for k in c {
-                ret.push((*i, *j, *k));
-            }
+            ret.push((*i, *j));
         }
     }
 
@@ -65,40 +58,23 @@ fn combination<'a, 'b, 'c>(
 pub fn fetch_manifests(
     client: &Client,
     mirror: &str,
-    branches: &[&str],
+    branch: &str,
+    topics: &[String],
     arches: &[&str],
     comps: &[&str],
     root: &Path,
 ) -> Result<Vec<String>> {
     let manifests = Arc::new(Mutex::new(Vec::new()));
     let manifests_clone = manifests.clone();
-    let combined = combination(arches, comps, branches);
+    let manifests_clone_2 = manifests.clone();
+    let combined = combination(arches, comps);
     combined
         .par_iter()
-        .try_for_each(move |(arch, comp, branch)| -> Result<()> {
-            let url = format!(
-                "{}/dists/{}/{}/binary-{}/Packages",
-                mirror, branch, comp, arch
-            );
+        .try_for_each(move |(arch, comp)| -> Result<()> {
+            let url = format!("{}/dists/{}/{}/binary-{}/Packages", mirror, branch, comp, arch);
             let parsed = Url::parse(&url)?;
             let manifest_name = parsed.host_str().unwrap_or_default().to_string() + parsed.path();
             let manifest_name = manifest_name.replace('/', "_");
-
-            if *branch != "stable" {
-                let resp = client.head(&url).send()?.error_for_status();
-
-                if let Err(e) = resp {
-                    if e.status()
-                        .map(|x| x == StatusCode::NOT_FOUND)
-                        .unwrap_or(false)
-                    {
-                        eprintln!("{url} 404 NOT FOUND, skipping ...");
-                        return Ok(());
-                    } else {
-                        return Err(e.into());
-                    }
-                }
-            }
 
             fetch_url(
                 client,
@@ -109,6 +85,42 @@ pub fn fetch_manifests(
 
             Ok(())
         })?;
+
+    topics.par_iter().try_for_each(move |topic| -> Result<()> {
+        let url = format!("{}/dists/{}/InRelease", mirror, topic);
+
+        let inrelease = client.get(&url).send()?.error_for_status()?.bytes()?;
+        let inrelease = String::from_utf8_lossy(&inrelease);
+        let inrelease = oma_debcontrol::parse_str(&inrelease).map_err(|e| anyhow!("{e}"))?;
+        let inrelease = inrelease.first().context("InRelease is empty")?;
+
+        let sha256 = &inrelease
+            .fields
+            .iter()
+            .find(|x| x.name == "SHA256")
+            .context("Illage InRelease")?
+            .value;
+
+        for i in sha256.split('\n') {
+            let name = i
+                .split_ascii_whitespace()
+                .next_back()
+                .context("Illage InRelease")?;
+
+            if name.ends_with("/Packages") {
+                let url = format!("{}/dists/{}/{}", mirror, topic, name);
+                let parsed = Url::parse(&url)?;
+                let manifest_name =
+                    parsed.host_str().unwrap_or_default().to_string() + parsed.path();
+                let manifest_name = manifest_name.replace('/', "_");
+
+                fetch_url(client, &url, &root.join(name))?;
+                manifests_clone_2.lock().unwrap().push(manifest_name);
+            }
+        }
+
+        Ok(())
+    })?;
 
     Ok(Arc::try_unwrap(manifests).unwrap().into_inner().unwrap())
 }

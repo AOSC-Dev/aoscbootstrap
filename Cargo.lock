@@ -106,6 +106,7 @@ dependencies = [
  "libsolv-sys",
  "nix",
  "num_cpus",
+ "oma-debcontrol",
  "owo-colors",
  "rand",
  "rayon",

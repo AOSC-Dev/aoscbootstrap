@@ -12,6 +12,7 @@ use resolvo::DefaultSolvableDisplay;
 use resolvo_deb::DebSolver;
 use solv::PackageMeta;
 use std::{
+    borrow::Cow,
     fs::File,
     io::{BufRead, BufReader, Write},
     path::Path,
@@ -349,16 +350,17 @@ fn main() {
     eprintln!("Downloading manifests ...");
     let arches = arches.iter().map(|a| a.as_str()).collect::<Vec<_>>();
 
-    let mut branches = vec![&args.branch];
-
-    if let Some(ref topics) = args.topics {
-        branches.extend(topics);
-    }
+    let topics = if let Some(ref t) = args.topics {
+        Cow::Borrowed(t)
+    } else {
+        Cow::Owned(vec![] as Vec<String>)
+    };
 
     let manifests = network::fetch_manifests(
         &client,
         mirror,
-        &branches.iter().map(|x| x.as_ref()).collect::<Vec<_>>(),
+        &args.branch,
+        &topics,
         &arches,
         &comps_str,
         target_path,
