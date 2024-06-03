@@ -44,11 +44,13 @@ pub fn fetch_url(client: &Client, url: &str, path: &Path) -> Result<()> {
 }
 
 #[inline]
-fn combination<'a, 'b>(a: &'a [&str], b: &'b [&str]) -> Vec<(&'a str, &'b str)> {
+fn combination<'a, 'b, 'c>(a: &'a [&str], b: &'b [&str], c: &'c [&str]) -> Vec<(&'a str, &'b str, &'c str)> {
     let mut ret = Vec::new();
     for i in a {
         for j in b {
-            ret.push((*i, *j));
+            for k in c {
+                ret.push((*i, *j, *k));
+            }
         }
     }
 
@@ -58,17 +60,17 @@ fn combination<'a, 'b>(a: &'a [&str], b: &'b [&str]) -> Vec<(&'a str, &'b str)> 
 pub fn fetch_manifests(
     client: &Client,
     mirror: &str,
-    branch: &str,
+    branches: &[&str],
     arches: &[&str],
     comps: &[&str],
     root: &Path,
 ) -> Result<Vec<String>> {
     let manifests = Arc::new(Mutex::new(Vec::new()));
     let manifests_clone = manifests.clone();
-    let combined = combination(arches, comps);
+    let combined = combination(arches, comps, branches);
     combined
         .par_iter()
-        .try_for_each(move |(arch, comp)| -> Result<()> {
+        .try_for_each(move |(arch, comp, branch)| -> Result<()> {
             let url = format!(
                 "{}/dists/{}/{}/binary-{}/Packages",
                 mirror, branch, comp, arch

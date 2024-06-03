@@ -69,6 +69,9 @@ struct Args {
     /// Mirror to be used
     #[clap(default_value = DEFAULT_MIRROR)]
     mirror: String,
+    /// Include topics
+    #[clap(short, long, num_args = 1..)]
+    topics: Option<Vec<String>>,
 }
 
 /// AOSC OS specific architecture mapping for ppc64
@@ -345,19 +348,28 @@ fn main() {
     std::fs::create_dir_all(&archive_path).unwrap();
     eprintln!("Downloading manifests ...");
     let arches = arches.iter().map(|a| a.as_str()).collect::<Vec<_>>();
+
+    let mut branches = vec![&args.branch];
+
+    if let Some(ref topics) = args.topics {
+        branches.extend(topics);
+    }
+
     let manifests = network::fetch_manifests(
         &client,
         mirror,
-        &args.branch,
+        &branches.iter().map(|x| x.as_ref()).collect::<Vec<_>>(),
         &arches,
         &comps_str,
         target_path,
     )
     .unwrap();
+
     let mut paths = Vec::new();
     for p in manifests {
         paths.push(target_path.join("var/lib/apt/lists").join(p));
     }
+
     eprintln!("Resolving dependencies ...");
     let mut all_stages = config.stub_packages.clone();
     all_stages.extend(config.base_packages);
