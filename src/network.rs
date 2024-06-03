@@ -1,6 +1,7 @@
 use anyhow::{anyhow, Result};
 use rayon::prelude::*;
 use reqwest::blocking::Client;
+use reqwest::StatusCode;
 use std::{fs::File, io::Write};
 use std::{
     path::Path,
@@ -44,7 +45,11 @@ pub fn fetch_url(client: &Client, url: &str, path: &Path) -> Result<()> {
 }
 
 #[inline]
-fn combination<'a, 'b, 'c>(a: &'a [&str], b: &'b [&str], c: &'c [&str]) -> Vec<(&'a str, &'b str, &'c str)> {
+fn combination<'a, 'b, 'c>(
+    a: &'a [&str],
+    b: &'b [&str],
+    c: &'c [&str],
+) -> Vec<(&'a str, &'b str, &'c str)> {
     let mut ret = Vec::new();
     for i in a {
         for j in b {
@@ -78,6 +83,23 @@ pub fn fetch_manifests(
             let parsed = Url::parse(&url)?;
             let manifest_name = parsed.host_str().unwrap_or_default().to_string() + parsed.path();
             let manifest_name = manifest_name.replace('/', "_");
+
+            if *branch != "stable" {
+                let resp = client.head(&url).send()?.error_for_status();
+
+                if let Err(e) = resp {
+                    if e.status()
+                        .map(|x| x == StatusCode::NOT_FOUND)
+                        .unwrap_or(false)
+                    {
+                        eprintln!("{url} 404 NOT FOUND, skipping ...");
+                        return Ok(());
+                    } else {
+                        return Err(e.into());
+                    }
+                }
+            }
+
             fetch_url(
                 client,
                 &url,
