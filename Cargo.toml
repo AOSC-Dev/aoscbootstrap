@@ -1,10 +1,9 @@
 [package]
 name = "aoscbootstrap"
-version = "0.4.6"
+version = "0.5.0"
 description = "Helper for bootstrapping AOSC OS from scratch"
 authors = ["liushuyu <liushuyu011@gmail.com>"]
 edition = "2021"
-
 
 [dependencies]
 reqwest = { version = "0.11", features = ["blocking"] }
