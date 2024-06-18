@@ -230,7 +230,6 @@ fn do_stage1(
     std::fs::create_dir_all(target_path.join("dev"))?;
     fs::bootstrap_apt(target_path, mirror, &args.branch).context("when preparing apt files")?;
     install::extract_bootstrap_pack(target_path).context("when extracting base files")?;
-    fs::make_device_nodes(target_path)?;
     eprintln!("Stage 1: Extracting packages ...");
     extract_packages(&stub_install, target_path, &archive_path)?;
     let names: Vec<String> = collect_filenames(&all_packages)?;

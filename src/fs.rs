@@ -2,8 +2,8 @@ use anyhow::{anyhow, Result};
 use flate2::write::GzEncoder;
 use flate2::Compression;
 use nix::fcntl::{open, OFlag};
-use nix::sys::stat::{fchmodat, makedev, mknod, FchmodatFlags, Mode, SFlag};
-use nix::unistd::{close, mkdir};
+use nix::sys::stat::{fchmodat, FchmodatFlags, Mode};
+use nix::unistd::close;
 use sha2::{Digest, Sha256};
 use std::io::Write;
 use std::path::Path;
@@ -124,31 +124,4 @@ pub fn sha256sum<R: Read>(mut reader: R) -> Result<String> {
     std::io::copy(&mut reader, &mut hasher)?;
 
     Ok(format!("{:x}", hasher.finalize()))
-}
-
-pub fn make_device_nodes(root: &Path) -> Result<()> {
-    let permission = Mode::S_IRGRP
-        | Mode::S_IRUSR
-        | Mode::S_IROTH
-        | Mode::S_IWGRP
-        | Mode::S_IWUSR
-        | Mode::S_IWOTH;
-    mknod(
-        &root.join("dev/null"),
-        SFlag::S_IFCHR,
-        permission,
-        makedev(1, 3),
-    )?;
-    mknod(
-        &root.join("dev/console"),
-        SFlag::S_IFCHR,
-        permission,
-        makedev(5, 1),
-    )?;
-    mkdir(
-        &root.join("dev/shm"),
-        Mode::S_IRWXG | Mode::S_IRWXO | Mode::S_IRWXU | Mode::S_ISVTX,
-    )?;
-
-    Ok(())
 }
