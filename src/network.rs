@@ -71,7 +71,10 @@ pub fn fetch_manifests(
     combined
         .par_iter()
         .try_for_each(move |(arch, comp)| -> Result<()> {
-            let url = format!("{}/dists/{}/{}/binary-{}/Packages", mirror, branch, comp, arch);
+            let url = format!(
+                "{}/dists/{}/{}/binary-{}/Packages",
+                mirror, branch, comp, arch
+            );
             let parsed = Url::parse(&url)?;
             let manifest_name = parsed.host_str().unwrap_or_default().to_string() + parsed.path();
             let manifest_name = manifest_name.replace('/', "_");
@@ -114,7 +117,11 @@ pub fn fetch_manifests(
                     parsed.host_str().unwrap_or_default().to_string() + parsed.path();
                 let manifest_name = manifest_name.replace('/', "_");
 
-                fetch_url(client, &url, &root.join(name))?;
+                fetch_url(
+                    client,
+                    &url,
+                    &root.join("var/lib/apt/lists").join(manifest_name.clone()),
+                )?;
                 manifests_clone_2.lock().unwrap().push(manifest_name);
             }
         }
