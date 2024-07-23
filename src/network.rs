@@ -101,7 +101,7 @@ pub fn fetch_manifests(
             .context("Illage InRelease")?
             .value;
 
-        for i in sha256.split('\n') {
+        for i in sha256.trim().split('\n') {
             let name = i
                 .split_ascii_whitespace()
                 .next_back()
