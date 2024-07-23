@@ -7,6 +7,7 @@ mod solv;
 use anyhow::{anyhow, Context, Result};
 use bytesize::ByteSize;
 use clap::Parser;
+use nix::unistd::Uid;
 use owo_colors::colored::*;
 use resolvo::DefaultSolvableDisplay;
 use resolvo_deb::DebSolver;
@@ -292,6 +293,12 @@ fn do_stage2(
 
 fn main() {
     let args = Args::parse();
+
+    if !Uid::current().is_root() {
+        eprintln!("aoscbootstrap must be run as root.");
+        exit(1);
+    }
+
     let target = &args.target;
     let mirror = &args.mirror;
     if args.squashfs.is_some() && which::which("mksquashfs").is_err() {
