@@ -91,6 +91,7 @@ pub fn fetch_manifests(
 
         let inrelease = client.get(&url).send()?.error_for_status()?.bytes()?;
         let inrelease = String::from_utf8_lossy(&inrelease);
+        let inrelease = oma_refresh::verify::verify(&inrelease, None, "/")?;
         let inrelease = oma_debcontrol::parse_str(&inrelease).map_err(|e| anyhow!("{e}"))?;
         let inrelease = inrelease.first().context("InRelease is empty")?;
 
