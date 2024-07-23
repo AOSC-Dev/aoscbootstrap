@@ -33,6 +33,7 @@ flate2 = "1.0"
 resolvo-deb = "0.2"
 resolvo = "0.2"
 oma-debcontrol = "0.3"
+oma-refresh = "0.18"
 
 [profile.release]
 lto = true
