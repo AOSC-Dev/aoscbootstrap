@@ -11,6 +11,7 @@ use serde::Deserialize;
 use tar::Archive as TarArchive;
 use tempfile::NamedTempFile;
 use xz2::read::XzDecoder;
+use zstd::Decoder;
 
 use crate::solv::PackageMeta;
 
@@ -37,6 +38,17 @@ pub fn decompress_tar_xz<R: Read>(reader: R, target: &Path) -> Result<()> {
     Ok(())
 }
 
+#[inline]
+pub fn decompress_tar_zst<R: Read>(reader: R, target: &Path) -> Result<()> {
+    let decompress = Decoder::new(reader)?;
+    let mut tar_processor = TarArchive::new(decompress);
+    tar_processor.set_unpack_xattrs(true);
+    tar_processor.set_preserve_permissions(true);
+    tar_processor.unpack(target)?;
+
+    Ok(())
+}
+
 pub fn extract_deb<R: Read>(reader: R, target: &Path) -> Result<()> {
     let mut deb = ArArchive::new(reader);
     while let Some(entry) = deb.next_entry() {
@@ -44,9 +56,16 @@ pub fn extract_deb<R: Read>(reader: R, target: &Path) -> Result<()> {
             continue;
         }
         let entry = entry.unwrap();
-        if entry.header().identifier() == b"data.tar.xz" {
-            decompress_tar_xz(entry, target)?;
-            return Ok(());
+        match entry.header().identifier() {
+            b"data.tar.xz" => {
+                decompress_tar_xz(entry, target)?;
+                return Ok(());
+            }
+            b"data.tar.zst" => {
+                decompress_tar_zst(entry, target)?;
+                return Ok(());
+            }
+            _ => continue,
         }
     }
 
