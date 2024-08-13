@@ -9,8 +9,6 @@ use bytesize::ByteSize;
 use clap::Parser;
 use nix::unistd::Uid;
 use owo_colors::colored::*;
-use resolvo::DefaultSolvableDisplay;
-use resolvo_deb::DebSolver;
 use solv::PackageMeta;
 use std::{
     borrow::Cow,
@@ -388,14 +386,6 @@ fn main() {
         let f = std::fs::read_to_string(i).unwrap();
         s.push_str(&f);
     }
-
-    let mut solver = DebSolver::new(&s);
-    if let Err(e) = solver.solve(all_stages.clone()) {
-        eprintln!(
-            "Maybe is a problem: {}",
-            e.display_user_friendly(&solver.0, &DefaultSolvableDisplay)
-        );
-    };
 
     let mut pool = solv::Pool::new();
     solv::populate_pool(&mut pool, &paths).unwrap();

@@ -93,7 +93,7 @@ pub fn fetch_manifests(
         let url = format!("{}/dists/{}/InRelease", mirror, topic);
 
         let inrelease = client.get(&url).send()?.error_for_status()?.text()?;
-        let inrelease = oma_refresh::verify::verify(&inrelease, None, "/")?;
+        let inrelease = oma_repo_verify::verify(&inrelease, None, "/")?;
         let inrelease = oma_debcontrol::parse_str(&inrelease).map_err(|e| anyhow!("{e}"))?;
         let inrelease = inrelease.first().context("InRelease is empty")?;
 

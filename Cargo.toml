@@ -6,16 +6,16 @@ authors = ["liushuyu <liushuyu011@gmail.com>"]
 edition = "2021"
 
 [dependencies]
-reqwest = { version = "0.11", features = ["blocking"] }
+reqwest = { version = "0.12", features = ["blocking"] }
 serde = { version = "1.0", features = ["derive"] }
 rand = "0.8"
-which = "5.0"
+which = "6.0"
 toml = "0.8"
 ar = "0.9"
 tar = "0.4"
 clap = { version = "^4", features = ["derive"] }
 anyhow = "1.0"
-nix = { version = "0.27", features = ["fs", "user"] }
+nix = { version = "0.29", features = ["fs", "user"] }
 sha2 = "0.10"
 rayon = "1.8"
 libloading = "0.8"
@@ -30,10 +30,8 @@ fs3 = "0.5"
 num_cpus = "1.16"
 owo-colors = "^4"
 flate2 = "1.0"
-resolvo-deb = "0.2"
-resolvo = "0.2"
 oma-debcontrol = "0.3"
-oma-refresh = { version = "0.18", default-features = false, features = ["sequoia-openssl-backend"] }
+oma-repo-verify = { version = "0.1", default-features = false, features = ["sequoia-openssl-backend"] }
 zstd = "0.13"
 
 [profile.release]
