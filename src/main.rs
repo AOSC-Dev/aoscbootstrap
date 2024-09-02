@@ -54,8 +54,8 @@ struct Args {
     #[clap(short = 'j', long)]
     jobs: Option<usize>,
     /// Allow existing target directory
-    #[clap(long = "allow-existing", default_value = "false")]
-    allow_existing: bool,
+    #[clap(long = "force", default_value = "false")]
+    force: bool,
     /// Export a xz compressed tar archive
     #[clap(long = "export-tar-xz")]
     tar_xz: Option<String>,
@@ -317,10 +317,10 @@ fn main() {
         .unwrap();
     let client = network::make_new_client().unwrap();
     let target_path = Path::new(target);
-    let allow_existing = args.allow_existing;
+    let force = args.force;
     let archive_path = target_path.join("var/cache/apt/archives");
     let threads = args.jobs.unwrap_or_else(num_cpus::get);
-    if target_path.exists() && !allow_existing {
+    if target_path.exists() && !force {
         panic!(
             "{}",
             "Target already exists. Please remove it first."
