@@ -23,7 +23,16 @@ fn sha256sum_file(path: &Path) -> Result<String> {
 
 pub(crate) fn sha256sum_file_tag(path: &Path) -> Result<()> {
     let mut f = File::create(format!("{}.sha256sum", path.to_string_lossy()))?;
-    f.write_all(format!("{} *{}", sha256sum_file(path)?, path.file_name().to_string_lossy()).as_bytes())?;
+    f.write_all(
+        format!(
+            "{} *{}",
+            sha256sum_file(path)?,
+            path.file_name()
+                .context("Failed to get file name")?
+                .to_string_lossy()
+        )
+        .as_bytes(),
+    )?;
 
     Ok(())
 }
