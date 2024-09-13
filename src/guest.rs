@@ -97,7 +97,7 @@ fn execute_container_command(ns_name: &str, args: &[&str]) -> Result<i32> {
 fn nspawn_do(target: &str, args: &[&str]) -> Result<()> {
     let ns_name = format!("bootstrap-{:x}", random::<u32>());
     let mut child = Command::new("systemd-nspawn")
-        .args(["-qbD", target, "-M", &ns_name, "--"])
+        .args(["-qD", target, "-M", &ns_name, "--"])
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .spawn()?;
