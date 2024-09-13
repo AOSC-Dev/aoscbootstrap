@@ -40,6 +40,7 @@ WHITELIST="^/efi
     # Remove some extra files that absolutely should not be in the release files.
     echo -e '\e[1mRemoving sensitive files ...\e[0m'
     rm -fv /etc/machine-id
+    rm -fv /etc/ssh/ssh_host_*_key*
 }
 
 set -eo pipefail
