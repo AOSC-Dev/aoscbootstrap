@@ -1,6 +1,8 @@
 alsa-plugins
 dpkg
 ffmpeg
+fuse
+fuse-3
 gstreamer
 gtk-2
 gtk-3
