@@ -26,7 +26,7 @@ mkdir -pv os-${ARCH:-$(dpkg --print-architecture)}/emukit
 
 rm -r emukit
 
-echo "Generating EmuKit ($ARCH) ..."
+echo "Generating EmuKit (${ARCH:-$(dpkg --print-architecture)}) ..."
 aoscbootstrap \
 	${BRANCH:-stable} emukit ${REPO:-https://repo.aosc.io/debs} \
 	--config /usr/share/aoscbootstrap/config/aosc-mainline.toml \
