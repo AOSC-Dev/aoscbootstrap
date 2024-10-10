@@ -113,22 +113,25 @@ pub fn fetch_manifests(
             .context("Illage InRelease")?
             .value;
 
-        for i in sha256.trim().split('\n') {
+        for i in sha256.trim().lines() {
             let name = i
                 .split_ascii_whitespace()
                 .next_back()
                 .context("Illage InRelease")?;
 
-            if name.ends_with("/Packages") {
+            if arches
+                .iter()
+                .any(|arch| name.ends_with(&format!("binary-{}/Packages", arch)))
+            {
                 let url = format!("{}/dists/{}/{}", mirror, topic, name);
-                let parsed = Url::parse(&url)?;
+                let url = Url::parse(&url)?;
                 let manifest_name =
-                    parsed.host_str().unwrap_or_default().to_string() + parsed.path();
+                    url.host_str().unwrap_or_default().to_string() + url.path();
                 let manifest_name = manifest_name.replace('/', "_");
 
                 fetch_url(
                     client,
-                    &url,
+                    url.as_str(),
                     &root.join("var/lib/apt/lists").join(manifest_name.clone()),
                 )?;
                 manifests_clone_2.lock().unwrap().push(manifest_name);
