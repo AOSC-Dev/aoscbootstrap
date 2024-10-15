@@ -10,8 +10,8 @@ for p in "${PACKAGES[@]}"; do
 count=$((count+1))
 echo -e "\e[1m[$count/$length] Installing ${p}...\e[0m"
 dpkg --force-depends --force-unsafe-io --unpack "/var/cache/apt/archives/${p}"
-sync
 done
+sync
 count_c=1;length_c=$(dpkg -l | grep -c 'iU')
 function dpkg_progress () {
     while read action step package; do
