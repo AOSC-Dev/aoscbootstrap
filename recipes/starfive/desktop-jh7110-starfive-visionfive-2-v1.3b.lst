@@ -1,0 +1,2 @@
+%include ../mainline/kde-common.lst
+%include ../mainline/starfive-jh7110-common.lst
