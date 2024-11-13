@@ -13,6 +13,7 @@ use std::{
 };
 use url::Url;
 
+use crate::DEFAULT_MIRROR;
 use crate::{fs::sha256sum, solv::PackageMeta};
 
 fn sha256sum_file(path: &Path) -> Result<String> {
@@ -99,7 +100,8 @@ pub fn fetch_manifests(
         })?;
 
     topics.par_iter().try_for_each(move |topic| -> Result<()> {
-        let url = format!("{}/dists/{}/InRelease", mirror, topic);
+	// Always use AOSC OS Repo for topics
+        let url = format!("{}/dists/{}/InRelease", DEFAULT_MIRROR, topic);
 
         let inrelease = client.get(&url).send()?.error_for_status()?.text()?;
         let inrelease = oma_repo_verify::verify(&inrelease, None, "/")?;
@@ -123,7 +125,7 @@ pub fn fetch_manifests(
                 .iter()
                 .any(|arch| name.ends_with(&format!("binary-{}/Packages", arch)))
             {
-                let url = format!("{}/dists/{}/{}", mirror, topic, name);
+                let url = format!("{}/dists/{}/{}", DEFAULT_MIRROR, topic, name);
                 let url = Url::parse(&url)?;
                 let manifest_name =
                     url.host_str().unwrap_or_default().to_string() + url.path();
@@ -174,6 +176,7 @@ fn batch_download_inner(pkgs: &[PackageMeta], mirror: &str, root: &Path) -> Resu
             );
 
             let path = root.join(filename);
+	    let mirror = if pkg.in_topic { DEFAULT_MIRROR } else { mirror };
             if !path.is_file()
                 && fetch_url(client, &format!("{}/{}", mirror, pkg.path), &path).is_err()
             {

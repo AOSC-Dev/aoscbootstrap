@@ -68,6 +68,7 @@ fn solvable_to_meta(s: *mut ffi::Solvable) -> Result<PackageMeta> {
             ffi::solv_knownid_SOLVABLE_ARCH as i32,
         ))
     };
+    let in_topic = !String::from(path.to_string_lossy()).contains("stable");
 
     Ok(PackageMeta {
         name: name.to_string_lossy().to_string(),
@@ -75,6 +76,7 @@ fn solvable_to_meta(s: *mut ffi::Solvable) -> Result<PackageMeta> {
         sha256: encode(checksum),
         path: path.to_string_lossy().to_string() + "/" + &filename.to_string_lossy(),
         arch: arch.to_string_lossy().to_string(),
+	in_topic,
     })
 }
 
