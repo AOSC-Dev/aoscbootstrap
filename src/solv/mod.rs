@@ -11,6 +11,7 @@ pub struct PackageMeta {
     pub sha256: String,
     pub path: String,
     pub arch: String,
+    pub in_topic: bool,
 }
 
 impl PackageMeta {
