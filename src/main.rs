@@ -3,6 +3,7 @@ mod guest;
 mod install;
 mod network;
 mod solv;
+mod topics;
 
 use anyhow::{anyhow, Context, Result};
 use bytesize::ByteSize;
