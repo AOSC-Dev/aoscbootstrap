@@ -7,6 +7,7 @@ WHITELIST="^/efi
 ^/usr
 ^/var/lib/apt/gen
 ^/var/lib/apt/extended_states
+^/var/lib/atm/state
 ^/var/lib/dkms
 ^/var/lib/dpkg
 ^/var/log/journal$
