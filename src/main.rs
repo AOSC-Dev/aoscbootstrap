@@ -11,6 +11,7 @@ use clap::Parser;
 use nix::unistd::Uid;
 use owo_colors::colored::*;
 use solv::PackageMeta;
+use topics::{fetch_topics, filter_topics, Topic};
 use std::{
     borrow::Cow,
     fs::File,
@@ -226,12 +227,14 @@ fn do_stage1(
     args: &Args,
     archive_path: std::path::PathBuf,
     all_packages: Vec<PackageMeta>,
+    topics: Vec<Topic>,
 ) -> Result<Option<tempfile::NamedTempFile>> {
     check_disk_usage(st.get_size_change() as u64, target_path)?;
     let stub_install = st.create_metadata()?;
     eprintln!("Stage 1: Creating filesystem skeleton ...");
     std::fs::create_dir_all(target_path.join("dev"))?;
     fs::bootstrap_apt(target_path, mirror, &args.branch).context("when preparing apt files")?;
+    topics::save_topics(target_path, topics)?;
     install::extract_bootstrap_pack(target_path).context("when extracting base files")?;
     eprintln!("Stage 1: Extracting packages ...");
     extract_packages(&stub_install, target_path, &archive_path)?;
@@ -364,7 +367,12 @@ fn main() {
     } else {
         Cow::Owned(vec![] as Vec<String>)
     };
-
+    let all_topics = fetch_topics().unwrap();
+    let filtered = if !topics.is_empty() {
+        filter_topics(topics.to_vec(), all_topics).unwrap()
+    } else {
+	Vec::new()
+    };
     let manifests = network::fetch_manifests(
         &client,
         mirror,
@@ -419,7 +427,7 @@ fn main() {
     install::generate_apt_extended_state(target_path, &all_stages, &all_packages, main_arch)
         .expect("Unable to generate APT extended state");
     let script =
-        match do_stage1(st, target_path, mirror, &args, archive_path, all_packages).unwrap() {
+        match do_stage1(st, target_path, mirror, &args, archive_path, all_packages, filtered).unwrap() {
             Some(value) => value,
             None => return,
         };
