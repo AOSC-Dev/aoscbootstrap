@@ -106,8 +106,8 @@ fn nspawn_do(target: &str, args: &[&str]) -> Result<()> {
     let status = execute_container_command(&ns_name, args)?;
 
     eprintln!("Powering off the container ...");
-    Command::new("machinectl")
-        .args(["poweroff", &ns_name])
+    Command::new("systemctl")
+        .args(["-M", &ns_name, "poweroff"])
         .status()?;
 
     if status != 0 {
