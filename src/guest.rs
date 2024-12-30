@@ -102,7 +102,7 @@ fn nspawn_do(target: &str, args: &[&str]) -> Result<()> {
         .stderr(Stdio::null())
         .spawn()?;
     eprintln!("Waiting for the container ...");
-    wait_for_container(&mut child, &ns_name, 10)?;
+    wait_for_container(&mut child, &ns_name, 60)?;
     let status = execute_container_command(&ns_name, args)?;
 
     eprintln!("Powering off the container ...");
