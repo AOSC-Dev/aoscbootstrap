@@ -116,6 +116,7 @@ dependencies = [
  "faster-hex",
  "flate2",
  "fs3",
+ "libaosc",
  "libc",
  "libloading",
  "libsolv-sys",
@@ -1256,6 +1257,17 @@ name = "lazycell"
 version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
+
+[[package]]
+name = "libaosc"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "43d6acff21eebea1b669f08fbe57a3f3266c34b03b821890f37d0ee93c0bb2af"
+dependencies = [
+ "deb822-lossless",
+ "libc",
+ "thiserror 2.0.9",
+]
 
 [[package]]
 name = "libc"

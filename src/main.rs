@@ -8,6 +8,7 @@ mod topics;
 use anyhow::{anyhow, Context, Result};
 use bytesize::ByteSize;
 use clap::Parser;
+use libaosc::arch::get_arch_name;
 use nix::unistd::Uid;
 use owo_colors::colored::*;
 use solv::PackageMeta;
@@ -77,41 +78,6 @@ struct Args {
     /// Include topics
     #[clap(short, long, num_args = 1..)]
     topics: Option<Vec<String>>,
-}
-
-/// AOSC OS specific architecture mapping for ppc64
-#[cfg(target_arch = "powerpc64")]
-#[inline]
-fn get_arch_name() -> Option<&'static str> {
-    let mut endian: libc::c_int = -1;
-    let result;
-    unsafe {
-        result = libc::prctl(libc::PR_GET_ENDIAN, &mut endian as *mut libc::c_int);
-    }
-    if result < 0 {
-        return None;
-    }
-    match endian {
-        libc::PR_ENDIAN_LITTLE | libc::PR_ENDIAN_PPC_LITTLE => Some("ppc64el"),
-        libc::PR_ENDIAN_BIG => Some("ppc64"),
-        _ => None,
-    }
-}
-
-/// AOSC OS specific architecture mapping table
-#[cfg(not(target_arch = "powerpc64"))]
-#[inline]
-fn get_arch_name() -> Option<&'static str> {
-    use std::env::consts::ARCH;
-
-    match ARCH {
-        "x86_64" => Some("amd64"),
-        "x86" => Some("i486"),
-        "powerpc" => Some("powerpc"),
-        "aarch64" => Some("arm64"),
-        "mips64" => Some("loongson3"),
-        _ => None,
-    }
 }
 
 fn get_default_arch() -> Vec<String> {
