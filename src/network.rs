@@ -100,11 +100,11 @@ pub fn fetch_manifests(
         })?;
 
     topics.par_iter().try_for_each(move |topic| -> Result<()> {
-	// Always use AOSC OS Repo for topics
+        // Always use AOSC OS Repo for topics
         let url = format!("{}/dists/{}/InRelease", DEFAULT_MIRROR, topic);
 
         let inrelease = client.get(&url).send()?.error_for_status()?.text()?;
-        let inrelease = oma_repo_verify::verify(&inrelease, None, "/")?;
+        let inrelease = oma_repo_verify::verify_inrelease(&inrelease, None, "/", false)?;
         let inrelease = oma_debcontrol::parse_str(&inrelease).map_err(|e| anyhow!("{e}"))?;
         let inrelease = inrelease.first().context("InRelease is empty")?;
 
@@ -127,8 +127,7 @@ pub fn fetch_manifests(
             {
                 let url = format!("{}/dists/{}/{}", DEFAULT_MIRROR, topic, name);
                 let url = Url::parse(&url)?;
-                let manifest_name =
-                    url.host_str().unwrap_or_default().to_string() + url.path();
+                let manifest_name = url.host_str().unwrap_or_default().to_string() + url.path();
                 let manifest_name = manifest_name.replace('/', "_");
 
                 fetch_url(
@@ -176,7 +175,7 @@ fn batch_download_inner(pkgs: &[PackageMeta], mirror: &str, root: &Path) -> Resu
             );
 
             let path = root.join(filename);
-	    let mirror = if pkg.in_topic { DEFAULT_MIRROR } else { mirror };
+            let mirror = if pkg.in_topic { DEFAULT_MIRROR } else { mirror };
             if !path.is_file()
                 && fetch_url(client, &format!("{}/{}", mirror, pkg.path), &path).is_err()
             {
