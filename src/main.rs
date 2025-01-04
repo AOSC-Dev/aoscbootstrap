@@ -11,7 +11,6 @@ use clap::Parser;
 use nix::unistd::Uid;
 use owo_colors::colored::*;
 use solv::PackageMeta;
-use topics::{fetch_topics, filter_topics, Topic};
 use std::{
     borrow::Cow,
     fs::File,
@@ -19,6 +18,7 @@ use std::{
     path::Path,
     process::exit,
 };
+use topics::{fetch_topics, filter_topics, Topic};
 
 const DEFAULT_MIRROR: &str = "https://repo.aosc.io/debs";
 
@@ -142,8 +142,7 @@ fn extract_packages(packages: &[PackageMeta], target: &Path, archive_path: &Path
 }
 
 fn collect_packages_from_lists(paths: &[String]) -> Result<Vec<String>> {
-    let mut packages = Vec::new();
-    packages.reserve(1024);
+    let mut packages = Vec::with_capacity(1024);
 
     for path in paths {
         collect_packages_from_list(path, &mut packages, 0)?;
@@ -343,10 +342,7 @@ fn main() {
             extras.len().cyan().bold()
         );
         extra_packages.extend(extras);
-        extra_packages = extra_packages
-            .into_iter()
-            .filter(|x| !x.starts_with("%include "))
-            .collect();
+        extra_packages.retain(|x| !x.starts_with("%include "));
     }
     // append the `noarch` architecture if it does not exist.
     // this is to avoid confusing issues with dependency resolving.
@@ -371,7 +367,7 @@ fn main() {
     let filtered = if !topics.is_empty() {
         filter_topics(topics.to_vec(), all_topics).unwrap()
     } else {
-	Vec::new()
+        Vec::new()
     };
     let manifests = network::fetch_manifests(
         &client,
@@ -426,11 +422,20 @@ fn main() {
         .expect("Did not find the main architecture");
     install::generate_apt_extended_state(target_path, &all_stages, &all_packages, main_arch)
         .expect("Unable to generate APT extended state");
-    let script =
-        match do_stage1(st, target_path, mirror, &args, archive_path, all_packages, filtered).unwrap() {
-            Some(value) => value,
-            None => return,
-        };
+    let script = match do_stage1(
+        st,
+        target_path,
+        mirror,
+        &args,
+        archive_path,
+        all_packages,
+        filtered,
+    )
+    .unwrap()
+    {
+        Some(value) => value,
+        None => return,
+    };
 
     do_stage2(t, target_path, script, target, &args, threads).unwrap();
 }
