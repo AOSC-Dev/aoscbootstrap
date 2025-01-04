@@ -1,6 +1,6 @@
 use super::PackageMeta;
 use anyhow::{anyhow, Result};
-use hex::encode;
+use faster_hex::hex_string;
 use libc::{c_char, c_int};
 use libsolv_sys::ffi;
 use std::{convert::TryInto, ffi::CStr, os::unix::ffi::OsStrExt, slice};
@@ -73,10 +73,10 @@ fn solvable_to_meta(s: *mut ffi::Solvable) -> Result<PackageMeta> {
     Ok(PackageMeta {
         name: name.to_string_lossy().to_string(),
         version: version.to_string_lossy().to_string(),
-        sha256: encode(checksum),
+        sha256: hex_string(checksum),
         path: path.to_string_lossy().to_string() + "/" + &filename.to_string_lossy(),
         arch: arch.to_string_lossy().to_string(),
-	in_topic,
+        in_topic,
     })
 }
 
