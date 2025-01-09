@@ -4,7 +4,6 @@ audio-base
 boot-base
 core-base
 editor-base
-kernel-base
 kmscon-base
 network-base
 python-base
