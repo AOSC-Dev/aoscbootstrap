@@ -41,7 +41,7 @@ const TOPIC_MANIFEST_URL: &str = "https://repo.aosc.io/debs/manifest/topics.json
 pub fn fetch_topics() -> Result<Vec<Topic>> {
     eprintln!("Fetching topics manifest ...");
     let client = Client::builder()
-        .user_agent("Wget/1.20.3 (linux-gnu)")
+        .user_agent("oma/1.14.514")
         .build()?;
     let response = client.get(TOPIC_MANIFEST_URL).send()?;
     response.error_for_status_ref()?;
