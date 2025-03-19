@@ -62,7 +62,7 @@ for i in $@; do
 					-s \
 						/usr/share/aoscbootstrap/scripts/reset-repo.sh \
 					-s \
-						/usr/share/aoscbootstrap/scripts/wsl-machine-id-hack.sh \
+						/usr/share/aoscbootstrap/scripts/wsl-workarounds.sh \
 					--include-files /usr/share/aoscbootstrap/recipes/$i.lst \
 					--export-tar-gz os-${ARCH:-$(dpkg --print-architecture)}/$i/aosc-os_${i}_$(date +%Y%m%d)_${ARCH:-$(dpkg --print-architecture)}.wsl
 			fi
