@@ -6,7 +6,7 @@ authors = ["liushuyu <liushuyu011@gmail.com>"]
 edition = "2024"
 
 [dependencies]
-reqwest = { version = "0.12", features = ["blocking"] }
+reqwest = { version = "0.12", features = ["blocking", "rustls-tls"], default-features = false}
 serde = { version = "1.0", features = ["derive"] }
 rand = "0.9"
 which = "7"
