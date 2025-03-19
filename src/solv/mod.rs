@@ -1,8 +1,8 @@
 mod ffi;
 use std::path::PathBuf;
 
-use anyhow::{bail, Result};
-pub use ffi::{Pool, Queue, Repo, Solver, Transaction, SOLVER_FLAG_BEST_OBEY_POLICY};
+use anyhow::{Result, bail};
+pub use ffi::{Pool, Queue, Repo, SOLVER_FLAG_BEST_OBEY_POLICY, Solver, Transaction};
 
 #[derive(Clone, Debug)]
 pub struct PackageMeta {

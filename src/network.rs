@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use rayon::prelude::*;
 use reqwest::blocking::Client;
 use std::{fs::File, io::Write};
@@ -39,9 +39,7 @@ pub(crate) fn sha256sum_file_tag(path: &Path) -> Result<()> {
 }
 
 pub fn make_new_client() -> Result<Client> {
-    Ok(Client::builder()
-        .user_agent("oma/1.14.514")
-        .build()?)
+    Ok(Client::builder().user_agent("oma/1.14.514").build()?)
 }
 
 pub fn fetch_url(client: &Client, url: &str, path: &Path) -> Result<()> {

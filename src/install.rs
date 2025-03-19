@@ -5,7 +5,7 @@ use std::{
     path::Path,
 };
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use ar::Archive as ArArchive;
 use serde::Deserialize;
 use tar::Archive as TarArchive;
