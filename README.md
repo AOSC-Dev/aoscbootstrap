@@ -5,13 +5,13 @@
 AOSCBootstrap requires the following libraries:
 
 - liblzma
-- openssl
+- nettle
 - zlib
 
 On AOSC OS, you may install these dependencies using the following command:
 
 ```bash
-# apt install xz openssl zlib
+# apt install xz nettle zlib
 ```
 
 ## Usage
