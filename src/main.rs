@@ -5,7 +5,7 @@ mod network;
 mod solv;
 mod topics;
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use bytesize::ByteSize;
 use clap::Parser;
 use libaosc::arch::get_arch_name;
@@ -19,7 +19,7 @@ use std::{
     path::Path,
     process::exit,
 };
-use topics::{fetch_topics, filter_topics, Topic};
+use topics::{Topic, fetch_topics, filter_topics};
 
 const DEFAULT_MIRROR: &str = "https://repo.aosc.io/debs";
 
@@ -179,7 +179,12 @@ fn check_disk_usage(required: u64, target: &Path) -> Result<()> {
 
     let available = available_space(target)?;
     if (available / 1024) < required {
-        return Err(anyhow!("It's not possible to continue, disk space not enough: {} required, but only {} is available. You need at least {} more.", ByteSize::kb(required), ByteSize::b(available),  ByteSize::kb(required - (available / 1024))));
+        return Err(anyhow!(
+            "It's not possible to continue, disk space not enough: {} required, but only {} is available. You need at least {} more.",
+            ByteSize::kb(required),
+            ByteSize::b(available),
+            ByteSize::kb(required - (available / 1024))
+        ));
     }
 
     Ok(())
@@ -298,7 +303,7 @@ fn main() {
         );
     }
     if let Some(jobs) = args.jobs {
-        std::env::set_var("RAYON_NUM_THREADS", jobs.to_string());
+        unsafe { std::env::set_var("RAYON_NUM_THREADS", jobs.to_string()) };
     }
     let mut extra_packages = args.include.clone();
     if let Some(ref extra_files) = args.include_files {

@@ -6,9 +6,9 @@ use std::{
     time::Duration,
 };
 
-use anyhow::{anyhow, Result};
-use libc::{c_char, c_int};
+use anyhow::{Result, anyhow};
 use libloading::{Library, Symbol};
+use nix::libc::{c_char, c_int};
 use rand::random;
 
 #[allow(non_camel_case_types)]

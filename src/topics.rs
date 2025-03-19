@@ -1,10 +1,10 @@
 use std::{
-    fs::{create_dir_all, File},
+    fs::{File, create_dir_all},
     io::Write,
     path::{Path, PathBuf},
 };
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use owo_colors::OwoColorize;
 use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
@@ -40,9 +40,7 @@ const TOPIC_MANIFEST_URL: &str = "https://repo.aosc.io/debs/manifest/topics.json
 
 pub fn fetch_topics() -> Result<Vec<Topic>> {
     eprintln!("Fetching topics manifest ...");
-    let client = Client::builder()
-        .user_agent("oma/1.14.514")
-        .build()?;
+    let client = Client::builder().user_agent("oma/1.14.514").build()?;
     let response = client.get(TOPIC_MANIFEST_URL).send()?;
     response.error_for_status_ref()?;
     let topics: Vec<Topic> = serde_json::from_str(&response.text()?)?;

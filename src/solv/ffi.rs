@@ -1,8 +1,8 @@
 use super::PackageMeta;
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use faster_hex::hex_string;
-use libc::{c_char, c_int};
 use libsolv_sys::ffi;
+use nix::libc::{c_char, c_int};
 use std::{convert::TryInto, ffi::CStr, os::unix::ffi::OsStrExt, slice};
 use std::{ffi::CString, path::Path, ptr::null_mut};
 
@@ -132,12 +132,12 @@ impl Repo {
     pub fn add_debpackages(&mut self, path: &Path) -> Result<()> {
         let mut path_buf = path.as_os_str().as_bytes().to_owned();
         path_buf.push(0);
-        let fp = unsafe { libc::fopen(path_buf.as_ptr() as *const c_char, cstr!("rb")) };
+        let fp = unsafe { nix::libc::fopen(path_buf.as_ptr() as *const c_char, cstr!("rb")) };
         if fp.is_null() {
             return Err(anyhow!("Failed to open '{}'", path.display()));
         }
         let result = unsafe { ffi::repo_add_debpackages(self.repo, fp as *mut ffi::_IO_FILE, 0) };
-        unsafe { libc::fclose(fp) };
+        unsafe { nix::libc::fclose(fp) };
         if result != 0 {
             return Err(anyhow!("Failed to add packages: {}", result));
         }

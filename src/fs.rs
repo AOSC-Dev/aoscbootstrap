@@ -1,15 +1,15 @@
-use anyhow::{anyhow, Result};
-use flate2::write::GzEncoder;
+use anyhow::{Result, anyhow};
 use flate2::Compression;
-use nix::fcntl::{open, OFlag};
-use nix::sys::stat::{fchmodat, FchmodatFlags, Mode};
+use flate2::write::GzEncoder;
+use nix::fcntl::{OFlag, open};
+use nix::sys::stat::{FchmodatFlags, Mode, fchmodat};
 use nix::unistd::close;
 use sha2::{Digest, Sha256};
 use std::io::Write;
 use std::path::Path;
 use std::process::Command;
 use std::{
-    fs::{create_dir_all, write, File},
+    fs::{File, create_dir_all, write},
     io::Read,
 };
 use tar::Builder;
