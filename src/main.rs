@@ -303,7 +303,10 @@ fn main() {
         );
     }
     if let Some(jobs) = args.jobs {
-        unsafe { std::env::set_var("RAYON_NUM_THREADS", jobs.to_string()) };
+        rayon::ThreadPoolBuilder::new()
+            .num_threads(jobs)
+            .build_global()
+            .unwrap();
     }
     let mut extra_packages = args.include.clone();
     if let Some(ref extra_files) = args.include_files {
