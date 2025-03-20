@@ -3,6 +3,7 @@ mod guest;
 mod install;
 mod network;
 mod solv;
+mod tar_dir_size;
 mod topics;
 
 use anyhow::{Context, Result, anyhow};
@@ -78,6 +79,9 @@ struct Args {
     /// Include topics
     #[clap(short, long, num_args = 1..)]
     topics: Option<Vec<String>>,
+    /// Disable Progress bar
+    #[clap(long)]
+    no_progressbar: bool,
 }
 
 fn get_default_arch() -> Vec<String> {
@@ -244,14 +248,14 @@ fn do_stage2(
     if let Some(ref xz) = args.tar_xz {
         eprintln!("Compressing the xz tarball, please wait patiently ...");
         let path = Path::new(&xz);
-        fs::archive_xz_tarball(target_path, path, threads as u32)?;
+        fs::archive_xz_tarball(target_path, path, threads as u32, args.no_progressbar)?;
         network::sha256sum_file_tag(path)?;
         eprintln!("Tarball available at {}", path.display().cyan());
     }
     if let Some(ref gz) = args.tar_gz {
         eprintln!("Compressing the gz tarball, please wait patiently ...");
         let path = Path::new(&gz);
-        fs::archive_gz_tarball(target_path, path)?;
+        fs::archive_gz_tarball(target_path, path, args.no_progressbar)?;
         network::sha256sum_file_tag(path)?;
         eprintln!("Tarball available at {}", path.display().cyan());
     }

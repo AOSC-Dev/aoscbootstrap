@@ -1,9 +1,10 @@
 use anyhow::{Result, anyhow};
 use flate2::Compression;
 use flate2::write::GzEncoder;
+use indicatif::{ProgressBar, ProgressDrawTarget, ProgressStyle};
 use nix::fcntl::{OFlag, open};
 use nix::sys::stat::{FchmodatFlags, Mode, fchmodat};
-use nix::unistd::close;
+use nix::unistd::{close, sync};
 use sha2::{Digest, Sha256};
 use std::io::Write;
 use std::path::Path;
@@ -15,6 +16,8 @@ use std::{
 use tar::Builder;
 use xz2::stream::{Filters, LzmaOptions, MtStreamBuilder, Stream};
 use xz2::write::XzEncoder;
+
+use crate::tar_dir_size::get_tar_dir_size;
 
 const LZMA_PRESET_EXTREME: u32 = 1 << 31;
 
@@ -60,22 +63,51 @@ pub fn bootstrap_apt(root: &Path, mirror: &str, branch: &str) -> Result<()> {
 }
 
 /// Make a tarball (xz compressed)
-pub fn archive_xz_tarball(root: &Path, target: &Path, threads: u32) -> Result<()> {
+pub fn archive_xz_tarball(
+    root: &Path,
+    target: &Path,
+    threads: u32,
+    no_progressbar: bool,
+) -> Result<()> {
     let f = File::create(target)?;
     let xz = build_xz_encoder(threads)?;
-    let builder = build_tarball_stream(XzEncoder::new_stream(f, xz), root)?;
-    builder.into_inner()?.finish()?.sync_all()?;
+
+    let pb = create_progress_bar(get_tar_dir_size(root)?, no_progressbar)?;
+
+    let builder = build_tarball_stream(pb.wrap_write(XzEncoder::new_stream(f, xz)), root)?;
+
+    // into_inner 步骤包含了 finish() 的调用
+    builder.into_inner()?;
+    sync();
 
     Ok(())
 }
 
 /// Make a tarball (gz compressed)
-pub fn archive_gz_tarball(root: &Path, target: &Path) -> Result<()> {
+pub fn archive_gz_tarball(root: &Path, target: &Path, no_progressbar: bool) -> Result<()> {
     let f = File::create(target)?;
-    let builder = build_tarball_stream(GzEncoder::new(f, Compression::best()), root)?;
-    builder.into_inner()?.finish()?.sync_all()?;
+
+    let pb = create_progress_bar(get_tar_dir_size(root)?, no_progressbar)?;
+
+    let builder =
+        build_tarball_stream(pb.wrap_write(GzEncoder::new(f, Compression::best())), root)?;
+
+    builder.into_inner()?;
+    sync();
 
     Ok(())
+}
+
+fn create_progress_bar(size: u64, no_progressbar: bool) -> Result<ProgressBar> {
+    let pb = ProgressBar::new(size).with_style(ProgressStyle::with_template(
+        "{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {bytes}/{total_bytes} {bytes_per_sec}",
+    )?);
+
+    if no_progressbar {
+        pb.set_draw_target(ProgressDrawTarget::hidden());
+    }
+
+    Ok(pb)
 }
 
 fn build_tarball_stream<W: Write>(stream: W, root: &Path) -> Result<Builder<W>, anyhow::Error> {
