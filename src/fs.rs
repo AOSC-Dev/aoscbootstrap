@@ -72,7 +72,7 @@ pub fn archive_xz_tarball(
     let f = File::create(target)?;
     let xz = build_xz_encoder(threads)?;
 
-    let pb = create_progress_bar(get_tar_dir_size(root)?, no_progressbar)?;
+    let pb = create_progress_bar(get_tar_dir_size(root, true, false, 512)?, no_progressbar)?;
 
     let builder = build_tarball_stream(pb.wrap_write(XzEncoder::new_stream(f, xz)), root)?;
 
@@ -87,7 +87,7 @@ pub fn archive_xz_tarball(
 pub fn archive_gz_tarball(root: &Path, target: &Path, no_progressbar: bool) -> Result<()> {
     let f = File::create(target)?;
 
-    let pb = create_progress_bar(get_tar_dir_size(root)?, no_progressbar)?;
+    let pb = create_progress_bar(get_tar_dir_size(root, true, false, 512)?, no_progressbar)?;
 
     let builder =
         build_tarball_stream(pb.wrap_write(GzEncoder::new(f, Compression::best())), root)?;
