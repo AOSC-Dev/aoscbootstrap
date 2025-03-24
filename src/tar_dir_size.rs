@@ -1,6 +1,6 @@
 //! This module is used to accurately "estimate" the size of a tar archive
 //! created from a given directory structure.
-//! 
+//!
 //! The tar format
 //! ==============
 //!
@@ -166,10 +166,24 @@
 //! -------
 //!
 //! GNU tar does not support sockets, neither the other implementations do.
+//!
+//! Deviations from tar-rs
+//! ======================
+//!
+//! Some behaviors of `tar-rs` are not the same as GNU ones, including:
+//!
+//! - The `./` prefix is stripped by default in `tar-rs`.
+//! - `tar-rs` does not handle hard links.
+//! - `tar-rs` uses blocking factor of 1 instead of 20, thus the entire
+//!   archive is padded to 512-byte block.
 
-use anyhow::{Context, Result};
+use anyhow::{Context, Result, bail};
 use std::{
-    collections::HashMap, env::{current_dir, set_current_dir}, fs::{read_link, Metadata}, os::unix::fs::{FileTypeExt, MetadataExt}, path::{Path, PathBuf}
+    collections::HashMap,
+    env::{current_dir, set_current_dir},
+    fs::read_link,
+    os::unix::fs::{FileTypeExt, MetadataExt},
+    path::{Path, PathBuf},
 };
 use walkdir::WalkDir;
 
@@ -177,18 +191,20 @@ use walkdir::WalkDir;
 const NAME_FIELD_SIZE: usize = 100;
 /// The block size.
 const BLOCK_SIZE: u64 = 512;
-/// The record size is `BLOCKING_FACTOR * BLOCK_SIZE`.
-///
-/// The entire tar archive must pad to this size, since it is the unit size of
-/// one read/write operation from/to the medium, similar to the `bs=` option
-/// in dd(1) utility.
-///
-/// The default (compiled in) is 20, thus resulting a minimum 10KiB of tar file.
-const BLOCKING_FACTOR: u64 = 20;
-const RECORD_SIZE: u64 = BLOCKING_FACTOR * BLOCK_SIZE;
+// The record size is `BLOCKING_FACTOR * BLOCK_SIZE`.
+//
+// The entire tar archive must pad to this size, since it is the unit size of
+// one read/write operation from/to the medium, similar to the `bs=` option
+// in dd(1) utility.
+//
+// The default (compiled in) is 20, thus resulting a minimum 10KiB of tar file.
+//
+// NOTE RECORD_SIZE is given by the get_tar_dir_size().
+// const BLOCKING_FACTOR: u64 = 20;
+// const RECORD_SIZE: u64 = BLOCKING_FACTOR * BLOCK_SIZE;
 
 /// Pad the given size to 512-byte sized blocks. Returns the number of blocks.
-fn pad_512_blocksize(size: u64) -> u64 {
+fn pad_to_blocksize(size: u64) -> u64 {
     let padded_bl = size.div_ceil(BLOCK_SIZE);
     let padded_size = padded_bl * BLOCK_SIZE;
     assert!(
@@ -200,63 +216,78 @@ fn pad_512_blocksize(size: u64) -> u64 {
     padded_bl
 }
 
-/// Get the intended size for xattr of a given file.
-fn get_xattrs_size(_file: &dyn AsRef<Path>, _metadata: &Metadata) -> Result<u64> {
-    // To be implemented
-    Ok(0)
-}
-
 /// Get the intended size occupied in the tar archive of a given file.
-fn get_size_in_blocks(file: &dyn AsRef<Path>, metadata: &Metadata) -> Result<u64> {
-    let name = file.as_ref();
-    let mut namelen = name.as_os_str().len();
-    let ftype = metadata.file_type();
+fn get_size_in_blocks(
+    file: &dyn AsRef<Path>,
+    ino_db: &mut HashMap<u64, PathBuf>,
+    strip_prefix: bool,
+    detect_hard_links: bool,
+) -> Result<u64> {
+    let file = file.as_ref();
+    let mut namelen = file.as_os_str().len();
     let mut size_in_blocks = 1; // Header block
+    // Since we are archiving, we have to treat each file as is, even if it
+    // is a directory, symbolic link or other file type. We can not follow
+    // symlinks.
+    let metadata = file.symlink_metadata()?;
+    let ftype = metadata.file_type();
+    if detect_hard_links {
+        let ino = metadata.ino();
+        if ino_db.contains_key(&ino) {
+            return Ok(1u64);
+        }
+        ino_db.insert(ino, file.to_path_buf());
+    }
+    if strip_prefix && file.to_string_lossy().starts_with("./") {
+        namelen -= 2;
+    }
     if ftype.is_file() {
         let file_length = metadata.len();
-        size_in_blocks += pad_512_blocksize(file_length);
+        size_in_blocks += pad_to_blocksize(file_length);
     } else if ftype.is_dir() {
         // Directory names must end with a slash.
-        if !name.to_string_lossy().ends_with('/') {
+        if !file.to_string_lossy().ends_with('/') {
             namelen += 1;
         }
     } else if ftype.is_symlink() {
-        // debug!("File {} is a symbolic link", name.display());
         let link_tgt = read_link(file)?;
-        // debug!("This symbol link is linked to {}", &link_tgt.display());
         let link_tgt_len = link_tgt.as_os_str().len();
         if link_tgt_len > NAME_FIELD_SIZE {
             // Here, if the link target has a long name, then there will be
             // additional "file" that contains this long name. The name in
             // its header will be "././@LongLink", and the file type is 'K'
             // indicating that the next file will have a long link target.
-            // debug!("This link target exceeds 100 char limit!");
-            size_in_blocks += 1 + pad_512_blocksize(link_tgt_len as u64 + 1);
+            size_in_blocks += 1 + pad_to_blocksize(link_tgt_len as u64 + 1);
         }
     } else if ftype.is_socket() {
-        // info!("File {} is a socket, ignoring.", name.display());
         // tar can't handle sockets.
-        size_in_blocks = 0;
+        return Ok(0);
     } else if ftype.is_block_device() || ftype.is_char_device() || ftype.is_fifo() {
         // Do nothing, as we've considered the long names, and they doesn't
         // have "contents" to store - device major:minor numbers are stored
         // in the header.
     } else {
-        // Unknown file type; skip;
-        size_in_blocks = 0;
+        // Unknown file type, skip.
+        return Ok(0);
     }
     // Additional blocks used to store the long name, this time it is a
     // null-terminated string.
     if namelen > NAME_FIELD_SIZE {
-        // debug!("This file exceeds 100 char limit!");
-        size_in_blocks += 1 + pad_512_blocksize(namelen as u64 + 1);
+        size_in_blocks += 1 + pad_to_blocksize(namelen as u64 + 1);
     };
-    size_in_blocks += get_xattrs_size(file, metadata)?;
     // debug!("Reporting as {} blocks", size_in_blocks);
     Ok(size_in_blocks)
 }
 
-pub fn get_tar_dir_size(root: &Path) -> Result<u64> {
+pub fn get_tar_dir_size(
+    root: &Path,
+    strip_prefix: bool,
+    hardlinks: bool,
+    record_size: u64,
+) -> Result<u64> {
+    if record_size < BLOCK_SIZE || record_size % BLOCK_SIZE != 0 {
+        bail!("Record size must be a multiple of {}", BLOCK_SIZE);
+    }
     // A hashmap with inode numbers as the key. Used to detect hard links.
     // Since a hard link is a feature implemented in the filesystem, we
     // can only rely on the inode number's uniqueness across a filesystem
@@ -266,7 +297,10 @@ pub fn get_tar_dir_size(root: &Path) -> Result<u64> {
     // name calculation will be inaccurate, since names in the tar entries
     // must be reative.
     let cwd = current_dir()?;
-    set_current_dir(root).context("Can not chdir() into system root.")?;
+    set_current_dir(root).context(format!(
+        "Can not chdir() into system root {}.",
+        &cwd.display()
+    ))?;
     // We start with . to walk through the system root.
     let walkdir = WalkDir::new(".")
         .follow_links(false)
@@ -277,34 +311,35 @@ pub fn get_tar_dir_size(root: &Path) -> Result<u64> {
     for ent in walkdir.into_iter() {
         let ent = ent?;
         let path = ent.path();
-        let metadata = ent.metadata()?;
-        let ino = metadata.ino();
-        if ino_hashmap.contains_key(&ino) {
-            // info!(
-            //     "File {} is a hard link to {}. Reporting as 1 block in size.",
-            //     path.display(),
-            //     ino_hashmap
-            //         .get(&ino)
-            //         .expect("Unable to find the duplicate")
-            //         .display()
-            // );
-            total_size_in_blks += 1;
-            continue;
-        }
-        ino_hashmap.insert(ino, path.to_path_buf());
-        total_size_in_blks += get_size_in_blocks(&path, &metadata)?;
+        total_size_in_blks += get_size_in_blocks(&path, &mut ino_hashmap, strip_prefix, hardlinks)?;
     }
 
-    set_current_dir(cwd)?;
+    set_current_dir(&cwd).context(format!(
+        "Can not chdir() into the previous work directory '{}.",
+        &cwd.display()
+    ))?;
+    // GNU tar has 1024 bytes of zeros as the EOF marker.
     let total_size_in_bytes = total_size_in_blks * BLOCK_SIZE + 1024;
-    let padded_records = total_size_in_bytes.div_ceil(RECORD_SIZE);
-    let padded = padded_records * RECORD_SIZE;
-    // println!(
-    //     "Total estimated tar size: {} bytes ({}) in {} records",
-    //     padded,
-    //     ByteSize::b(padded),
-    //     padded_records
-    // );
+    // Pad the archive size to the record size.
+    let padded_records = total_size_in_bytes.div_ceil(record_size);
+    let padded = padded_records * record_size;
 
     Ok(padded)
+}
+
+#[test]
+fn test_est_tar_size() -> Result<()> {
+    let path = option_env!("TARGET_DIR").context(
+        "Target directory is required either by command line or TARGET_DIR environment variable.",
+    )?;
+    let path = Path::new(path);
+    if !path.exists() {
+        bail!("{} does not exist", path.display());
+    }
+    if !path.is_dir() {
+        bail!("{} is not a directory", path.display());
+    }
+    let size = get_tar_dir_size(path, true, false, 512)?;
+    eprintln!("{}", size);
+    Ok(())
 }
