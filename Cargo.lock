@@ -108,7 +108,7 @@ checksum = "dcfed56ad506cb2c684a14971b8861fdc3baaaae314b9e5f9bb532cbe3ba7a4f"
 
 [[package]]
 name = "aoscbootstrap"
-version = "0.8.5"
+version = "0.9.0"
 dependencies = [
  "anyhow",
  "ar",
