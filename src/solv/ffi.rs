@@ -251,17 +251,28 @@ impl Solver {
     }
 
     pub fn get_problems(&self) -> Result<Vec<String>> {
-        let mut problems = Vec::new();
+        let mut res = Vec::new();
         let count = unsafe { ffi::solver_problem_count(self.solver) };
         for i in 1..=count {
             let problem = unsafe { ffi::solver_problem2str(self.solver, i as c_int) };
             if problem.is_null() {
                 return Err(anyhow!("problem2str failed: {}", i));
             }
-            problems.push(unsafe { CStr::from_ptr(problem).to_string_lossy().to_string() });
+            res.push(unsafe { CStr::from_ptr(problem).to_string_lossy().to_string() });
+
+            let solution_count = unsafe { ffi::solver_solution_count(self.solver, i as c_int) };
+
+            for j in 1..solution_count {
+                let s =
+                    unsafe { ffi::solver_solutionelement2str(self.solver, i as c_int, j as c_int) };
+
+                res.push(format!("Solution: {}", unsafe {
+                    CStr::from_ptr(s).to_string_lossy().to_string()
+                }));
+            }
         }
 
-        Ok(problems)
+        Ok(res)
     }
 }
 
