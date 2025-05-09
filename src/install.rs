@@ -7,10 +7,10 @@ use std::{
 
 use anyhow::{Result, anyhow};
 use ar::Archive as ArArchive;
+use liblzma::read::XzDecoder;
 use serde::Deserialize;
 use tar::Archive as TarArchive;
 use tempfile::NamedTempFile;
-use xz2::read::XzDecoder;
 use zstd::Decoder;
 
 use crate::solv::PackageMeta;

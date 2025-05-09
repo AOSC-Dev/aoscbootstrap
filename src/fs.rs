@@ -2,10 +2,13 @@ use anyhow::{Result, anyhow};
 use flate2::Compression;
 use flate2::write::GzEncoder;
 use indicatif::{ProgressBar, ProgressDrawTarget, ProgressStyle};
+use liblzma::stream::{Filters, LzmaOptions, MtStreamBuilder, Stream};
+use liblzma::write::XzEncoder;
 use nix::fcntl::{OFlag, open};
 use nix::sys::stat::{FchmodatFlags, Mode, fchmodat};
 use nix::unistd::{close, sync};
 use sha2::{Digest, Sha256};
+use std::fs;
 use std::io::Write;
 use std::path::Path;
 use std::process::Command;
@@ -14,23 +17,34 @@ use std::{
     io::Read,
 };
 use tar::Builder;
-use xz2::stream::{Filters, LzmaOptions, MtStreamBuilder, Stream};
-use xz2::write::XzEncoder;
 
 use crate::tar_dir_size::get_tar_dir_size;
 
 const LZMA_PRESET_EXTREME: u32 = 1 << 31;
 
-pub fn bootstrap_apt(root: &Path, mirror: &str, branch: &str) -> Result<()> {
+pub enum MirrorOrSourceList<'a> {
+    Mirror { mirror: &'a str, branch: &'a str },
+    SourceList(&'a Path),
+}
+
+pub fn bootstrap_apt(root: &Path, m: MirrorOrSourceList<'_>) -> Result<()> {
     create_dir_all(root.join("var/lib/dpkg"))?;
     create_dir_all(root.join("etc/apt"))?;
     create_dir_all(root.join("var/lib/apt/lists"))?;
     write(root.join("etc/locale.conf"), b"LANG=C.UTF-8\n")?;
     write(root.join("etc/shadow"), b"root:x:1:0:99999:7:::\n")?;
-    write(
-        root.join("etc/apt/sources.list"),
-        format!("deb {} {} main\n", mirror, branch),
-    )?;
+
+    match m {
+        MirrorOrSourceList::Mirror { mirror, branch } => {
+            write(
+                root.join("etc/apt/sources.list"),
+                format!("deb {} {} main\n", mirror, branch),
+            )?;
+        }
+        MirrorOrSourceList::SourceList(path) => {
+            fs::copy(path, root.join("etc/apt/sources.list"))?;
+        }
+    }
 
     close(open(
         &root.join("var/lib/dpkg/available"),

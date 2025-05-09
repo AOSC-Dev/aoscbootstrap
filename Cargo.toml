@@ -22,7 +22,6 @@ libloading = "0.8"
 libsolv-sys = "0.1"
 url = "2.4"
 faster-hex = "0.10"
-xz2 = "0.1"
 tempfile = "3.8"
 bytesize = "2"
 fs3 = "0.5"
@@ -30,12 +29,15 @@ num_cpus = "1.16"
 owo-colors = "^4"
 flate2 = "1.0"
 oma-debcontrol = "0.3"
-oma-repo-verify = "0.6"
+oma-repo-verify = "0.8"
 zstd = "0.13"
 serde_json = "1.0.132"
 libaosc = { version = "0.2", default-features = false }
 indicatif = "0.17"
 walkdir = "2.5.0"
+oma-refresh = { version = "0.48.2", default-features = false, features = ["sequoia-nettle-backend", "rustls", "blocking"] }
+liblzma = { version = "0.4", features = ["parallel"] }
+oma-fetch = "0.30"
 
 [profile.release]
 lto = true

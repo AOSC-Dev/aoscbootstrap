@@ -1,6 +1,10 @@
 use anyhow::{Context, Result, anyhow};
+use libaosc::packages::Packages as PackagesManifest;
 use rayon::prelude::*;
 use reqwest::blocking::Client;
+use std::fs;
+use std::path::PathBuf;
+use std::str::FromStr;
 use std::{fs::File, io::Write};
 use std::{
     path::Path,
@@ -52,11 +56,11 @@ pub fn fetch_url(client: &Client, url: &str, path: &Path) -> Result<()> {
 }
 
 #[inline]
-fn combination<'a, 'b>(a: &'a [&str], b: &'b [&str]) -> Vec<(&'a str, &'b str)> {
+fn combination<'a, 'b>(a: &'a [&str], b: &'b [String]) -> Vec<(&'a str, &'b str)> {
     let mut ret = Vec::new();
     for i in a {
         for j in b {
-            ret.push((*i, *j));
+            ret.push((*i, j.as_str()));
         }
     }
 
@@ -69,7 +73,7 @@ pub fn fetch_manifests(
     branch: &str,
     topics: &[String],
     arches: &[&str],
-    comps: &[&str],
+    comps: &[String],
     root: &Path,
 ) -> Result<Vec<String>> {
     let manifests = Arc::new(Mutex::new(Vec::new()));
@@ -102,7 +106,7 @@ pub fn fetch_manifests(
         let url = format!("{}/dists/{}/InRelease", DEFAULT_MIRROR, topic);
 
         let inrelease = client.get(&url).send()?.error_for_status()?.text()?;
-        let inrelease = oma_repo_verify::verify_inrelease(&inrelease, None, "/", false)?;
+        let inrelease = oma_repo_verify::verify_inrelease_by_sysroot(&inrelease, None, "/", false)?;
         let inrelease = oma_debcontrol::parse_str(&inrelease).map_err(|e| anyhow!("{e}"))?;
         let inrelease = inrelease.first().context("InRelease is empty")?;
 
@@ -143,9 +147,53 @@ pub fn fetch_manifests(
     Ok(Arc::try_unwrap(manifests).unwrap().into_inner().unwrap())
 }
 
-pub fn batch_download(pkgs: &[PackageMeta], mirror: &str, root: &Path) -> Result<()> {
+pub struct SelectMirror {
+    url_pkgs: Vec<(String, PackagesManifest)>,
+}
+
+impl SelectMirror {
+    pub fn new(url_path: Vec<(String, PathBuf)>) -> Result<Self> {
+        let mut url_pkgs = vec![];
+        for (url, p) in url_path {
+            let s = fs::read_to_string(p)?;
+            let manifest = PackagesManifest::from_str(&s)?;
+            url_pkgs.push((url, manifest));
+        }
+
+        Ok(Self { url_pkgs })
+    }
+
+    pub fn mirror_url<'a>(&'a self, pkg: &PackageMeta) -> Option<&'a str> {
+        for (url, manifest) in &self.url_pkgs {
+            if manifest.0.iter().any(|p| {
+                p.package == pkg.name && p.version == pkg.version && p.architecture == pkg.arch
+            }) {
+                let (s, _) = url.split_once("dists/")?;
+                return Some(s);
+            }
+        }
+
+        None
+    }
+}
+
+pub enum Mirror<'a> {
+    Single(&'a str),
+    List(SelectMirror),
+}
+
+impl<'a> Mirror<'a> {
+    fn mirror_url(&'a self, pkg: &PackageMeta) -> Option<&'a str> {
+        match self {
+            Mirror::Single(s) => Some(if pkg.in_topic { DEFAULT_MIRROR } else { s }),
+            Mirror::List(s) => s.mirror_url(pkg),
+        }
+    }
+}
+
+pub fn batch_download(pkgs: &[PackageMeta], root: &Path, m: Mirror) -> Result<()> {
     for i in 1..=3 {
-        if batch_download_inner(pkgs, mirror, root).is_ok() {
+        if batch_download_inner(pkgs, root, &m).is_ok() {
             return Ok(());
         }
         eprintln!("[{}/3] Retrying ...", i);
@@ -155,7 +203,7 @@ pub fn batch_download(pkgs: &[PackageMeta], mirror: &str, root: &Path) -> Result
     Err(anyhow!("Failed to download packages"))
 }
 
-fn batch_download_inner(pkgs: &[PackageMeta], mirror: &str, root: &Path) -> Result<()> {
+fn batch_download_inner(pkgs: &[PackageMeta], root: &Path, m: &Mirror) -> Result<()> {
     let client = make_new_client()?;
     let total = pkgs.len() * 2;
     let count = AtomicUsize::new(0);
@@ -173,7 +221,16 @@ fn batch_download_inner(pkgs: &[PackageMeta], mirror: &str, root: &Path) -> Resu
             );
 
             let path = root.join(filename);
-            let mirror = if pkg.in_topic { DEFAULT_MIRROR } else { mirror };
+
+            let mirror = match m.mirror_url(&pkg) {
+                Some(m) => m,
+                None => {
+                    error.store(true, Ordering::SeqCst);
+                    eprintln!("Download failed: {}: failed to get mirror", pkg.name);
+                    return;
+                }
+            };
+
             if !path.is_file()
                 && fetch_url(client, &format!("{}/{}", mirror, pkg.path), &path).is_err()
             {

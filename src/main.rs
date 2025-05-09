@@ -10,14 +10,19 @@ use anyhow::{Context, Result, anyhow};
 use bytesize::ByteSize;
 use clap::Parser;
 use libaosc::arch::get_arch_name;
+use network::{Mirror, SelectMirror};
 use nix::unistd::Uid;
+use oma_fetch::Event;
+use oma_refresh::db::OmaRefresh;
 use owo_colors::colored::*;
+use reqwest::ClientBuilder;
 use solv::PackageMeta;
 use std::{
     borrow::Cow,
+    collections::HashMap,
     fs::File,
     io::{BufRead, BufReader, Write},
-    path::Path,
+    path::{Path, PathBuf},
     process::exit,
 };
 use topics::{Topic, fetch_topics, filter_topics};
@@ -53,7 +58,7 @@ struct Args {
     stage1: bool,
     /// Add additional components
     #[clap(short = 'm', long, num_args = 1..)]
-    comps: Vec<String>,
+    comps: Option<Vec<String>>,
     /// Limit the number of parallel jobs
     #[clap(short = 'j', long)]
     jobs: Option<usize>,
@@ -69,19 +74,22 @@ struct Args {
     /// Export a xz compressed squashfs archive
     #[clap(long = "export-squashfs")]
     squashfs: Option<String>,
-    /// Branch to use
-    branch: String,
     /// Path to the destination
     target: String,
+    /// Branch to use
+    branch: Option<String>,
     /// Mirror to be used
-    #[clap(default_value = DEFAULT_MIRROR)]
-    mirror: String,
+    #[clap(conflicts_with = "sources_list")]
+    mirror: Option<String>,
     /// Include topics
     #[clap(short, long, num_args = 1..)]
     topics: Option<Vec<String>>,
     /// Disable Progress bar
     #[clap(long)]
     no_progressbar: bool,
+    /// Use sources.list to fetch packages
+    #[clap(long)]
+    sources_list: Option<PathBuf>,
 }
 
 fn get_default_arch() -> Vec<String> {
@@ -197,7 +205,6 @@ fn check_disk_usage(required: u64, target: &Path) -> Result<()> {
 fn do_stage1(
     st: solv::Transaction,
     target_path: &Path,
-    mirror: &str,
     args: &Args,
     archive_path: std::path::PathBuf,
     all_packages: Vec<PackageMeta>,
@@ -207,7 +214,19 @@ fn do_stage1(
     let stub_install = st.create_metadata()?;
     eprintln!("Stage 1: Creating filesystem skeleton ...");
     std::fs::create_dir_all(target_path.join("dev"))?;
-    fs::bootstrap_apt(target_path, mirror, &args.branch).context("when preparing apt files")?;
+    if let Some((mirror, branch)) = args.mirror.as_ref().zip(args.branch.as_ref()) {
+        fs::bootstrap_apt(
+            target_path,
+            fs::MirrorOrSourceList::Mirror { mirror, branch },
+        )
+        .context("when preparing apt files")?;
+    } else {
+        fs::bootstrap_apt(
+            target_path,
+            fs::MirrorOrSourceList::SourceList(args.sources_list.as_ref().unwrap()),
+        )
+        .context("when preparing apt files")?;
+    }
     topics::save_topics(target_path, topics)?;
     install::extract_bootstrap_pack(target_path).context("when extracting base files")?;
     eprintln!("Stage 1: Extracting packages ...");
@@ -270,6 +289,26 @@ fn do_stage2(
     Ok(())
 }
 
+enum Manifests {
+    Single(Vec<String>),
+    List(HashMap<String, String>),
+}
+
+impl Manifests {
+    fn paths(&self, target_path: &Path) -> Vec<PathBuf> {
+        match self {
+            Manifests::Single(items) => items
+                .iter()
+                .map(|p| target_path.join("var/lib/apt/lists").join(p))
+                .collect(),
+            Manifests::List(hash_map) => hash_map
+                .iter()
+                .map(|(_, p)| target_path.join("var/lib/apt/lists").join(p))
+                .collect(),
+        }
+    }
+}
+
 fn main() {
     let args = Args::parse();
 
@@ -327,9 +366,14 @@ fn main() {
     if !arches.contains(&"all".to_string()) {
         arches.push("all".to_string());
     }
-    let mut comps = args.comps.clone();
-    comps.push("main".to_string());
-    let comps_str = comps.iter().map(|s| s.as_str()).collect::<Vec<_>>();
+
+    let comps = if let Some(comps) = &args.comps {
+        let mut comps = comps.to_owned();
+        comps.push("main".to_string());
+        Some(comps)
+    } else {
+        None
+    };
 
     std::fs::create_dir_all(target_path.join("var/lib/apt/lists")).unwrap();
     std::fs::create_dir_all(&archive_path).unwrap();
@@ -347,37 +391,39 @@ fn main() {
     } else {
         Vec::new()
     };
-    let manifests = network::fetch_manifests(
-        &client,
-        mirror,
-        &args.branch,
-        &topics,
-        &arches,
-        &comps_str,
-        target_path,
-    )
-    .unwrap();
 
-    let mut paths = Vec::new();
-    for p in manifests {
-        paths.push(target_path.join("var/lib/apt/lists").join(p));
-    }
+    let manifests = match &args.sources_list {
+        Some(path) => Manifests::List(fetch_manifest_from_sources_list(
+            target_path,
+            &arches,
+            vec![path.to_path_buf()],
+        )),
+        None => Manifests::Single(
+            network::fetch_manifests(
+                &client,
+                mirror.as_ref().unwrap(),
+                args.branch.as_ref().unwrap(),
+                &topics,
+                &arches,
+                comps.as_ref().unwrap(),
+                target_path,
+            )
+            .unwrap(),
+        ),
+    };
+
+    let paths = manifests.paths(target_path);
 
     eprintln!("Resolving dependencies ...");
     let mut all_stages = config.stub_packages.clone();
     all_stages.extend(config.base_packages);
     all_stages.extend(extra_packages);
 
-    let mut s = String::new();
-    for i in &paths {
-        let f = std::fs::read_to_string(i).unwrap();
-        s.push_str(&f);
-    }
-
     let mut pool = solv::Pool::new();
     solv::populate_pool(&mut pool, &paths).unwrap();
     let t = solv::calculate_deps(&mut pool, &all_stages).unwrap();
     let all_packages = t.create_metadata().unwrap();
+
     eprintln!(
         "Total installed size: {}",
         ByteSize::kb(t.get_size_change().unsigned_abs())
@@ -386,7 +432,28 @@ fn main() {
     );
     check_disk_usage(t.get_size_change() as u64, target_path).unwrap();
     eprintln!("Downloading packages ...");
-    network::batch_download(&all_packages, mirror, &archive_path).unwrap();
+    network::batch_download(
+        &all_packages,
+        &archive_path,
+        if let Some(m) = &args.mirror {
+            Mirror::Single(m)
+        } else {
+            Mirror::List(if let Manifests::List(map) = manifests {
+                SelectMirror::new(
+                    map.into_iter()
+                        .map(|(url, file_name)| {
+                            (url, target_path.join("var/lib/apt/lists").join(file_name))
+                        })
+                        .collect(),
+                )
+                .context("Failed to read package manifests")
+                .unwrap()
+            } else {
+                unreachable!()
+            })
+        },
+    )
+    .unwrap();
     nix::unistd::sync();
     if args.download_only {
         eprintln!("{}", "Download finished.".green().bold());
@@ -400,20 +467,55 @@ fn main() {
         .expect("Did not find the main architecture");
     install::generate_apt_extended_state(target_path, &all_stages, &all_packages, main_arch)
         .expect("Unable to generate APT extended state");
-    let script = match do_stage1(
-        st,
-        target_path,
-        mirror,
-        &args,
-        archive_path,
-        all_packages,
-        filtered,
-    )
-    .unwrap()
-    {
-        Some(value) => value,
-        None => return,
-    };
+    let script =
+        match do_stage1(st, target_path, &args, archive_path, all_packages, filtered).unwrap() {
+            Some(value) => value,
+            None => return,
+        };
 
     do_stage2(t, target_path, script, target, &args, threads).unwrap();
+}
+
+fn fetch_manifest_from_sources_list(
+    target_path: &Path,
+    arches: &[&str],
+    paths: Vec<PathBuf>,
+) -> HashMap<String, String> {
+    let client = ClientBuilder::new()
+        .user_agent("oma/1.14.514")
+        .build()
+        .unwrap();
+
+    let mut map = HashMap::new();
+    map.insert(
+        "MetaKey".to_string(),
+        "$(COMPONENT)/binary-$(ARCHITECTURE)/Packages".to_string(),
+    );
+
+    let lists = target_path.join("var/lib/apt/lists");
+    let success_list = OmaRefresh::builder()
+        .download_dir(lists.to_path_buf())
+        .arch(arches.iter().find(|a| **a != "all").unwrap().to_string())
+        .client(&client)
+        .manifest_config(vec![map])
+        .source("/".into())
+        .topic_msg("")
+        .sources_lists_paths(paths)
+        .build()
+        .start_blocking(async |e| {
+            if let oma_refresh::db::Event::DownloadEvent(Event::Failed { file_name, error }) = e {
+                eprintln!("Download file {file_name} with error: {error}");
+            }
+        })
+        .unwrap();
+
+    let mut names = HashMap::new();
+
+    for i in success_list {
+        if i.file_name.ends_with("_Packages") {
+            names.insert(i.url.clone(), i.file_name.clone());
+        }
+    }
+
+    names
 }
