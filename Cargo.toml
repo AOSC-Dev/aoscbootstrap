@@ -32,7 +32,7 @@ oma-debcontrol = "0.3"
 oma-repo-verify = "0.8"
 zstd = "0.13"
 serde_json = "1.0.132"
-libaosc = { version = "0.2", default-features = false }
+libaosc = { version = "0.3", default-features = false, features = ["arch", "parse-pacakges-manifest"] }
 indicatif = "0.17"
 walkdir = "2.5.0"
 oma-refresh = { version = "0.48.2", default-features = false, features = ["sequoia-nettle-backend", "rustls", "blocking"] }
