@@ -1504,9 +1504,9 @@ checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
 
 [[package]]
 name = "libaosc"
-version = "0.2.1"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4e089112ab7e76c1800aa5c3877075fce8de3f162d94c5e9d5e87c35eae25edb"
+checksum = "d593958383701b051fe48f2d6b24418d2fd82b7429a7213e01a5866dec6298fd"
 dependencies = [
  "deb822-lossless",
  "libc",
