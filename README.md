@@ -17,11 +17,11 @@ On AOSC OS, you may install these dependencies using the following command:
 ## Usage
 
 ```
-aoscbootstrap <branch> <path/to/target> --arch=<architecture> --config=<config> [--include=<additional packages>] [--include-file=<list of packages>] [mirror URL]
+aoscbootstrap <branch> <path/to/target> --arch=<architecture> --config=<config> [--include=<additional packages>] [--include-files=<list of packages>] [mirror URL]
 ```
 
 The `[mirror URL]` argument is optional, when omitted, the script defaults to `https://repo.aosc.io/debs`.
-The `--include=` and `--include-file=` are optional, can be specified multiple times and can be specified together.
+The `--include=` and `--include-files=` are optional, can be specified multiple times and can be specified together.
 
 For example, to bootstrap a `amd64` architecture base system on the `stable` branch at `/root/aosc`, using `localhost` as the mirror:
 
@@ -47,7 +47,7 @@ editor-base
 Assume you have saved the file as `base.lst`, then you can use AOSCBootstrap like this:
 
 ```
-aoscbootstrap stable /root/aosc http://localhost/debs/ --arch=amd64 --config=aosc-mainline.toml --include-file=base.lst
+aoscbootstrap stable /root/aosc http://localhost/debs/ --arch=amd64 --config=aosc-mainline.toml --include-files=base.lst
 ```
 
 ### Additional Features
