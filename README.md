@@ -11,7 +11,7 @@ AOSCBootstrap requires the following libraries:
 On AOSC OS, you may install these dependencies using the following command:
 
 ```bash
-# apt install xz nettle zlib
+# apt install xz nettle zlib arch-chroot
 ```
 
 ## Usage

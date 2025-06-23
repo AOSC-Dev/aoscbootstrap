@@ -71,7 +71,7 @@ fn wait_for_container(child: &mut Child, ns_name: &str, retry: usize) -> Result<
 }
 
 fn chroot_do(target: &str, args: &[&str]) -> Result<()> {
-    let status = Command::new("chroot").arg(target).args(args).status()?;
+    let status = Command::new("arch-chroot").arg(target).args(args).status()?;
 
     if !status.success() {
         return Err(anyhow!("chroot exited with status {}", status));
@@ -120,7 +120,8 @@ fn nspawn_do(target: &str, args: &[&str]) -> Result<()> {
 pub fn run_in_guest(target: &str, args: &[&str]) -> Result<()> {
     if which::which("systemd-nspawn").is_ok() {
         return nspawn_do(target, args);
-    } else if which::which("chroot").is_ok() {
+    } else if which::which("arch-chroot").is_ok() {
+        eprintln!("systemd-nspawn not found! falling back to chroot ...");
         return chroot_do(target, args);
     }
 
