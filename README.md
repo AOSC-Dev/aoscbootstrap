@@ -71,7 +71,7 @@ And then you should be able to find all the "vanilla" AOSC OS recipes under the 
 
 ## Usage with `CIEL!`
 
-To use AOSCBootstrap with [CIEL!](https://github.com/AOSC-Dev/ciel) and its plugins, you can follow these procedures below:
+To use AOSCBootstrap with [CIEL!](https://github.com/AOSC-Dev/ciel-rs) and its plugins, you can follow these procedures below:
 
 1. Create your work directory and `cd` into it.
 1. Run `ciel init`.
