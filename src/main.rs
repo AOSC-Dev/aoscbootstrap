@@ -42,7 +42,7 @@ struct Args {
     #[clap(long, conflicts_with = "sources_list")]
     branch: Option<String>,
     /// Add additional components
-    #[clap(short = 'm', long, num_args = 1.., conflicts_with = "sources_list")]
+    #[clap(long, num_args = 1.., conflicts_with = "sources_list")]
     comps: Option<Vec<String>>,
     /// Use sources.list to fetch packages
     #[clap(long)]
