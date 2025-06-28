@@ -126,6 +126,7 @@ fn create_progress_bar(size: u64, no_progressbar: bool) -> Result<ProgressBar> {
 
 fn build_tarball_stream<W: Write>(stream: W, root: &Path) -> Result<Builder<W>, anyhow::Error> {
     let mut builder = Builder::new(stream);
+    builder.sparse(false); // otherwise some docker version may complain: Unhandled tar header type 83
     builder.mode(tar::HeaderMode::Complete);
     builder.follow_symlinks(false);
     builder.append_dir_all(".", root)?;
