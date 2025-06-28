@@ -374,7 +374,7 @@ fn main() {
         comps.push("main".to_string());
         Some(comps)
     } else {
-        None
+        Some(vec!["main".to_string()])
     };
 
     std::fs::create_dir_all(target_path.join("var/lib/apt/lists")).unwrap();
@@ -404,7 +404,7 @@ fn main() {
             network::fetch_manifests(
                 &client,
                 mirror.as_ref().unwrap(),
-                args.branch.as_ref().unwrap(),
+                args.branch.as_ref().unwrap_or(&String::from("stable")),
                 &topics,
                 &arches,
                 comps.as_ref().unwrap(),
