@@ -2,16 +2,17 @@
 
 ## Dependencies
 
-AOSCBootstrap requires the following libraries:
+AOSCBootstrap requires the following libraries and utilities:
 
 - liblzma
 - nettle
 - zlib
+- arch-chroot
 
 On AOSC OS, you may install these dependencies using the following command:
 
 ```bash
-# apt install xz nettle zlib arch-chroot
+# oma install xz nettle zlib arch-chroot
 ```
 
 ## Usage
