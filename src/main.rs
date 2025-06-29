@@ -32,21 +32,6 @@ const DEFAULT_MIRROR: &str = "https://repo.aosc.io/debs";
 #[derive(Parser, Debug)]
 #[clap(about, version, author)]
 struct Args {
-    /// Path to the destination
-    #[clap(long)]
-    target: String,
-    /// Mirror to be used
-    #[clap(short, long, conflicts_with = "sources_list")]
-    mirror: Option<String>,
-    /// Branch to use
-    #[clap(long, conflicts_with = "sources_list")]
-    branch: Option<String>,
-    /// Add additional components
-    #[clap(long, num_args = 1.., conflicts_with = "sources_list")]
-    comps: Option<Vec<String>>,
-    /// Use sources.list to fetch packages
-    #[clap(long)]
-    sources_list: Option<PathBuf>,
     /// Sets a custom config file
     #[clap(short, long)]
     config: String,
@@ -71,6 +56,9 @@ struct Args {
     /// Only finishes stage 1, do not progress further
     #[clap(short = '1', long = "stage1-only")]
     stage1: bool,
+    /// Add additional components
+    #[clap(long, num_args = 1.., conflicts_with = "sources_list")]
+    comps: Option<Vec<String>>,
     /// Limit the number of parallel jobs
     #[clap(short = 'j', long)]
     jobs: Option<usize>,
@@ -86,12 +74,23 @@ struct Args {
     /// Export a xz compressed squashfs archive
     #[clap(long = "export-squashfs")]
     squashfs: Option<String>,
+    /// Path to the destination
+    target: String,
+    /// Branch to use
+    #[clap(conflicts_with = "sources_list")]
+    branch: Option<String>,
+    /// Mirror to be used
+    #[clap(conflicts_with = "sources_list", default_value = DEFAULT_MIRROR)]
+    mirror: Option<String>,
     /// Include topics
     #[clap(short, long, num_args = 1..)]
     topics: Option<Vec<String>>,
     /// Disable Progress bar
     #[clap(long)]
     no_progressbar: bool,
+    /// Use sources.list to fetch packages
+    #[clap(long)]
+    sources_list: Option<PathBuf>,
 }
 
 fn get_default_arch() -> Vec<String> {
@@ -404,7 +403,7 @@ fn main() {
             network::fetch_manifests(
                 &client,
                 mirror.as_ref().unwrap(),
-                args.branch.as_ref().unwrap_or(&String::from("stable")),
+                args.branch.as_ref().unwrap(),
                 &topics,
                 &arches,
                 comps.as_ref().unwrap(),
