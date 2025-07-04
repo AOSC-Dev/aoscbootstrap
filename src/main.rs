@@ -35,13 +35,13 @@ struct Args {
     /// Path to the destination
     #[clap(long)]
     target: String,
-    /// Mirror to be used
+    /// Mirror to be used (default as https://repo.aosc.io)
     #[clap(short, long, conflicts_with = "sources_list")]
     mirror: Option<String>,
-    /// Branch to use
+    /// Branch to use (default as stable)
     #[clap(long, conflicts_with = "sources_list")]
     branch: Option<String>,
-    /// Add additional components
+    /// Add additional components (default as main)
     #[clap(long, num_args = 1.., conflicts_with = "sources_list")]
     comps: Option<Vec<String>>,
     /// Use sources.list to fetch packages
@@ -403,11 +403,11 @@ fn main() {
         None => Manifests::Single(
             network::fetch_manifests(
                 &client,
-                mirror.as_ref().unwrap(),
-                args.branch.as_ref().unwrap(),
+                mirror.as_deref().unwrap_or(DEFAULT_MIRROR),
+                args.branch.as_deref().unwrap_or("stable"),
                 &topics,
                 &arches,
-                comps.as_ref().unwrap(),
+                comps.unwrap_or_else(|| vec!["main".to_string()]),
                 target_path,
             )
             .unwrap(),
@@ -437,22 +437,22 @@ fn main() {
     network::batch_download(
         &all_packages,
         &archive_path,
-        if let Some(m) = &args.mirror {
-            Mirror::Single(m)
-        } else {
-            Mirror::List(if let Manifests::List(map) = manifests {
+        match manifests {
+            Manifests::Single(_) => {
+                Mirror::Single(args.mirror.as_deref().unwrap_or(DEFAULT_MIRROR))
+            }
+            Manifests::List(hash_map) => Mirror::List(
                 SelectMirror::new(
-                    map.into_iter()
+                    hash_map
+                        .into_iter()
                         .map(|(url, file_name)| {
                             (url, target_path.join("var/lib/apt/lists").join(file_name))
                         })
                         .collect(),
                 )
                 .context("Failed to read package manifests")
-                .unwrap()
-            } else {
-                unreachable!()
-            })
+                .unwrap(),
+            ),
         },
     )
     .unwrap();
