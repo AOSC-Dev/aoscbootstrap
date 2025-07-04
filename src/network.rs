@@ -73,13 +73,13 @@ pub fn fetch_manifests(
     branch: &str,
     topics: &[String],
     arches: &[&str],
-    comps: &[String],
+    comps: Vec<String>,
     root: &Path,
 ) -> Result<Vec<String>> {
     let manifests = Arc::new(Mutex::new(Vec::new()));
     let manifests_clone = manifests.clone();
     let manifests_clone_2 = manifests.clone();
-    let combined = combination(arches, comps);
+    let combined = combination(arches, &comps);
     combined
         .par_iter()
         .try_for_each(move |(arch, comp)| -> Result<()> {
