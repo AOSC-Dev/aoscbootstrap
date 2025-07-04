@@ -38,7 +38,7 @@ pub fn bootstrap_apt(root: &Path, m: MirrorOrSourceList<'_>) -> Result<()> {
         MirrorOrSourceList::Mirror { mirror, branch } => {
             write(
                 root.join("etc/apt/sources.list"),
-                format!("deb {} {} main\n", mirror, branch),
+                format!("deb {mirror} {branch} main\n"),
             )?;
         }
         MirrorOrSourceList::SourceList(path) => {

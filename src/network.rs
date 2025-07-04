@@ -84,8 +84,7 @@ pub fn fetch_manifests(
         .par_iter()
         .try_for_each(move |(arch, comp)| -> Result<()> {
             let url = format!(
-                "{}/dists/{}/{}/binary-{}/Packages",
-                mirror, branch, comp, arch
+                "{mirror}/dists/{branch}/{comp}/binary-{arch}/Packages"
             );
             let parsed = Url::parse(&url)?;
             let manifest_name = parsed.host_str().unwrap_or_default().to_string() + parsed.path();
@@ -103,7 +102,7 @@ pub fn fetch_manifests(
 
     topics.par_iter().try_for_each(move |topic| -> Result<()> {
         // Always use AOSC OS Repo for topics
-        let url = format!("{}/dists/{}/InRelease", DEFAULT_MIRROR, topic);
+        let url = format!("{DEFAULT_MIRROR}/dists/{topic}/InRelease");
 
         let inrelease = client.get(&url).send()?.error_for_status()?.text()?;
         let inrelease = oma_repo_verify::verify_inrelease_by_sysroot(&inrelease, None, "/", false)?;
@@ -125,9 +124,9 @@ pub fn fetch_manifests(
 
             if arches
                 .iter()
-                .any(|arch| name.ends_with(&format!("binary-{}/Packages", arch)))
+                .any(|arch| name.ends_with(&format!("binary-{arch}/Packages")))
             {
-                let url = format!("{}/dists/{}/{}", DEFAULT_MIRROR, topic, name);
+                let url = format!("{DEFAULT_MIRROR}/dists/{topic}/{name}");
                 let url = Url::parse(&url)?;
                 let manifest_name = url.host_str().unwrap_or_default().to_string() + url.path();
                 let manifest_name = manifest_name.replace('/', "_");
@@ -196,7 +195,7 @@ pub fn batch_download(pkgs: &[PackageMeta], root: &Path, m: Mirror) -> Result<()
         if batch_download_inner(pkgs, root, &m).is_ok() {
             return Ok(());
         }
-        eprintln!("[{}/3] Retrying ...", i);
+        eprintln!("[{i}/3] Retrying ...");
         sleep(Duration::from_secs(2));
     }
 
@@ -222,7 +221,7 @@ fn batch_download_inner(pkgs: &[PackageMeta], root: &Path, m: &Mirror) -> Result
 
             let path = root.join(filename);
 
-            let mirror = match m.mirror_url(&pkg) {
+            let mirror = match m.mirror_url(pkg) {
                 Some(m) => m,
                 None => {
                     error.store(true, Ordering::SeqCst);

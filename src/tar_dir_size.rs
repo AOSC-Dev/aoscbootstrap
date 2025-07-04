@@ -209,9 +209,7 @@ fn pad_to_blocksize(size: u64) -> u64 {
     let padded_size = padded_bl * BLOCK_SIZE;
     assert!(
         padded_size - size < BLOCK_SIZE,
-        "Invalid padding result: {}, was {}",
-        padded_size,
-        size
+        "Invalid padding result: {padded_size}, was {size}"
     );
     padded_bl
 }
@@ -340,6 +338,6 @@ fn test_est_tar_size() -> Result<()> {
         bail!("{} is not a directory", path.display());
     }
     let size = get_tar_dir_size(path, true, false, 512)?;
-    eprintln!("{}", size);
+    eprintln!("{size}");
     Ok(())
 }

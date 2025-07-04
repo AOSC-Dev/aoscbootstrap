@@ -92,7 +92,7 @@ pub fn extract_bootstrap_pack(target: &Path) -> Result<()> {
 fn generate_dpkg_install_script(packages: &[String]) -> String {
     let mut package_list = String::new();
     for package in packages {
-        package_list.push_str(&format!("'{}' ", package));
+        package_list.push_str(&format!("'{package}' "));
     }
 
     INSTALL_SCRIPT_TPL.replacen("{}", &package_list, 1)

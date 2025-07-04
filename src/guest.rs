@@ -71,7 +71,10 @@ fn wait_for_container(child: &mut Child, ns_name: &str, retry: usize) -> Result<
 }
 
 fn chroot_do(target: &str, args: &[&str]) -> Result<()> {
-    let status = Command::new("arch-chroot").arg(target).args(args).status()?;
+    let status = Command::new("arch-chroot")
+        .arg(target)
+        .args(args)
+        .status()?;
 
     if !status.success() {
         return Err(anyhow!("chroot exited with status {}", status));
