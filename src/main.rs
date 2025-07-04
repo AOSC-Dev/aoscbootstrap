@@ -303,9 +303,7 @@ impl Manifests {
                 .iter()
                 .map(|p| target_path.join("var/lib/apt/lists").join(p))
                 .collect(),
-            Manifests::List(hash_map) => hash_map
-                .iter()
-                .map(|(_, p)| target_path.join("var/lib/apt/lists").join(p))
+            Manifests::List(hash_map) => hash_map.values().map(|p| target_path.join("var/lib/apt/lists").join(p))
                 .collect(),
         }
     }
@@ -332,7 +330,7 @@ fn main() {
     };
     let config_path = &args.config;
     let config = install::read_config(config_path)
-        .context(format!("when reading configuration file '{}'", config_path))
+        .context(format!("when reading configuration file '{config_path}'"))
         .unwrap();
     let client = network::make_new_client().unwrap();
     let target_path = Path::new(target);
