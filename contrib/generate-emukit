@@ -28,7 +28,10 @@ rm -r emukit
 
 echo "Generating EmuKit (${ARCH:-$(dpkg --print-architecture)}) ..."
 aoscbootstrap \
-	${BRANCH:-stable} emukit ${REPO:-https://repo.aosc.io/debs} \
+	--branch ${BRANCH:-stable} \
+	--comps ${COMPS:-main} \
+	--target emukit \
+	--mirror ${REPO:-https://repo.aosc.io/debs} \
 	--config /usr/share/aoscbootstrap/config/aosc-mainline.toml \
 	-x \
 	--arch ${ARCH:-$(dpkg --print-architecture)} \
