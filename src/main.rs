@@ -35,17 +35,17 @@ struct Args {
     /// Path to the destination
     #[clap(long)]
     target: String,
-    /// Mirror to be used
-    #[clap(long, default_value = DEFAULT_MIRROR)]
-    mirror: String,
-    /// Branch to use
-    #[clap(long, default_value = "stable")]
-    branch: String,
-    /// Add additional components
-    #[clap(long, num_args = 1.., alias = "components", default_value = "main")]
-    comps: Vec<String>,
+    /// Mirror to be used (default as https://repo.aosc.io)
+    #[clap(short, long, conflicts_with = "sources_list")]
+    mirror: Option<String>,
+    /// Branch to use (default as stable)
+    #[clap(long, conflicts_with = "sources_list")]
+    branch: Option<String>,
+    /// Add additional components (default as main)
+    #[clap(long, num_args = 1.., conflicts_with = "sources_list")]
+    comps: Option<Vec<String>>,
     /// Use sources.list to fetch packages
-    #[clap(long, conflicts_with_all = ["mirror", "branch", "comps"])]
+    #[clap(long)]
     sources_list: Option<PathBuf>,
     /// Sets a custom config file
     #[clap(short, long)]
@@ -216,19 +216,16 @@ fn do_stage1(
     let stub_install = st.create_metadata()?;
     eprintln!("Stage 1: Creating filesystem skeleton ...");
     std::fs::create_dir_all(target_path.join("dev"))?;
-    if let Some(sources_list) = &args.sources_list {
+    if let Some((mirror, branch)) = args.mirror.as_ref().zip(args.branch.as_ref()) {
         fs::bootstrap_apt(
             target_path,
-            fs::MirrorOrSourceList::SourceList(&sources_list),
+            fs::MirrorOrSourceList::Mirror { mirror, branch },
         )
         .context("when preparing apt files")?;
     } else {
         fs::bootstrap_apt(
             target_path,
-            fs::MirrorOrSourceList::Mirror {
-                mirror: &args.mirror,
-                branch: &args.branch,
-            },
+            fs::MirrorOrSourceList::SourceList(args.sources_list.as_ref().unwrap()),
         )
         .context("when preparing apt files")?;
     }
@@ -306,9 +303,7 @@ impl Manifests {
                 .iter()
                 .map(|p| target_path.join("var/lib/apt/lists").join(p))
                 .collect(),
-            Manifests::List(hash_map) => hash_map
-                .values()
-                .map(|p| target_path.join("var/lib/apt/lists").join(p))
+            Manifests::List(hash_map) => hash_map.values().map(|p| target_path.join("var/lib/apt/lists").join(p))
                 .collect(),
         }
     }
@@ -372,6 +367,14 @@ fn main() {
         arches.push("all".to_string());
     }
 
+    let comps = if let Some(comps) = &args.comps {
+        let mut comps = comps.to_owned();
+        comps.push("main".to_string());
+        Some(comps)
+    } else {
+        None
+    };
+
     std::fs::create_dir_all(target_path.join("var/lib/apt/lists")).unwrap();
     std::fs::create_dir_all(&archive_path).unwrap();
     eprintln!("Downloading manifests ...");
@@ -398,11 +401,11 @@ fn main() {
         None => Manifests::Single(
             network::fetch_manifests(
                 &client,
-                mirror,
-                &args.branch,
+                mirror.as_deref().unwrap_or(DEFAULT_MIRROR),
+                args.branch.as_deref().unwrap_or("stable"),
                 &topics,
                 &arches,
-                &args.comps,
+                comps.unwrap_or_else(|| vec!["main".to_string()]),
                 target_path,
             )
             .unwrap(),
@@ -433,7 +436,9 @@ fn main() {
         &all_packages,
         &archive_path,
         match manifests {
-            Manifests::Single(_) => Mirror::Single(&args.mirror),
+            Manifests::Single(_) => {
+                Mirror::Single(args.mirror.as_deref().unwrap_or(DEFAULT_MIRROR))
+            }
             Manifests::List(hash_map) => Mirror::List(
                 SelectMirror::new(
                     hash_map
