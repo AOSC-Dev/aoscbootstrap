@@ -37,7 +37,10 @@ for i in $@; do
 			if [[ "$i" != "wsl" ]]; then
 				echo "Generating mainline release ($i) ..."
 				aoscbootstrap \
-					${BRANCH:-stable} $i ${REPO:-https://repo.aosc.io/debs} \
+					--branch ${BRANCH:-stable} \
+					--comps ${COMPS:-main} \
+					--target $i \
+					--mirror ${REPO:-https://repo.aosc.io/debs} \
 					--config /usr/share/aoscbootstrap/config/aosc-mainline.toml \
 					-x \
 					--arch ${ARCH:-$(dpkg --print-architecture)} \
@@ -55,7 +58,10 @@ for i in $@; do
 			else
 				echo "Generating WSL release ..."
 				aoscbootstrap \
-					${BRANCH:-stable} $i ${REPO:-https://repo.aosc.io/debs} \
+					--branch ${BRANCH:-stable} \
+					--comps ${COMPS:-main} \
+					--target $i \
+					--mirror ${REPO:-https://repo.aosc.io/debs} \
 					--config /usr/share/aoscbootstrap/config/aosc-mainline.toml \
 					-x \
 					--arch ${ARCH:-$(dpkg --print-architecture)} \
@@ -69,7 +75,10 @@ for i in $@; do
 		else
 			echo "Generating mainline release ($i, stage2) ..."
 			aoscbootstrap \
-				${ARCH:-$(dpkg --print-architecture)}-bring-up $i ${REPO:-https://repo.aosc.io/debs} \
+				--branch ${ARCH:-$(dpkg --print-architecture)}-bring-up \
+				--target $i \
+				--comps ${COMPS:-main} \
+				--mirror ${REPO:-https://repo.aosc.io/debs} \
 				--config /usr/share/aoscbootstrap/config/aosc-mainline.toml \
 				-x \
 				--arch ${ARCH:-$(dpkg --print-architecture)} \
@@ -88,7 +97,10 @@ for i in $@; do
 			echo "Generating Retro release ($i) ..."
 				mkdir -pv os-${ARCH:-$(dpkg --print-architecture)}/${i/retro-/}
 				aoscbootstrap \
-					${BRANCH:-stable} $i ${REPO:-https://repo.aosc.io/debs-retro} \
+					--branch ${BRANCH:-stable} \
+					--target $i \
+					--comps ${COMPS:-main} \
+					--mirror ${REPO:-https://repo.aosc.io/debs-retro} \
 					--config /usr/share/aoscbootstrap/config/aosc-retro.toml \
 					-x \
 					--arch ${ARCH:-$(dpkg --print-architecture)} \
@@ -100,7 +112,10 @@ for i in $@; do
 			echo "Generating Retro release ($i, stage2) ..."
 			mkdir -pv os-${ARCH:-$(dpkg --print-architecture)}/${i/retro-/}
 			aoscbootstrap \
-				${ARCH:-$(dpkg --print-architecture)}-bring-up $i ${REPO:-https://repo.aosc.io/debs-retro} \
+				--branch ${ARCH:-$(dpkg --print-architecture)}-bring-up \
+				--target $i \
+				--comps ${COMPS:-main} \
+				--mirror ${REPO:-https://repo.aosc.io/debs-retro} \
 				--config /usr/share/aoscbootstrap/config/aosc-retro.toml \
 				-x \
 				--arch ${ARCH:-$(dpkg --print-architecture)} \
