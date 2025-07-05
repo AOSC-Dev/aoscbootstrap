@@ -73,7 +73,7 @@ pub fn fetch_manifests(
     branch: &str,
     topics: &[String],
     arches: &[&str],
-    comps: &Vec<String>,
+    comps: Vec<String>,
     root: &Path,
 ) -> Result<Vec<String>> {
     let manifests = Arc::new(Mutex::new(Vec::new()));
