@@ -18,22 +18,41 @@ On AOSC OS, you may install these dependencies using the following command:
 ## Usage
 
 ```
-aoscbootstrap <branch> <path/to/target> --arch=<architecture> --config=<config> [--include=<additional packages>] [--include-files=<list of packages>] [mirror URL]
+aoscbootstrap \
+	--branch <branch> \
+	--component <component> \
+	--target <path/to/target> \
+	--arch <architecture> \
+	--config <config> \
+	[--include <additional packages>] \
+	[--include-files <list of packages>] \
+	[--mirror <URL including path to APT repo root]
 ```
 
-The `[mirror URL]` argument is optional, when omitted, the script defaults to `https://repo.aosc.io/debs`.
-The `--include=` and `--include-files=` are optional, can be specified multiple times and can be specified together.
+- The `[mirror URL]` argument is optional, when omitted, the script defaults to `https://repo.aosc.io/debs`.
+- The `--include` and `--include-files` arguments are optional, can be specified multiple times and can be specified together.
 
 For example, to bootstrap a `amd64` architecture base system on the `stable` branch at `/root/aosc`, using `localhost` as the mirror:
 
 ```
-aoscbootstrap stable /root/aosc http://localhost/debs/ --arch=amd64 --config=aosc-mainline.toml
+aoscbootstrap \
+	--branch stable \
+	--target /root/aosc \
+	--mirror http://localhost/debs \
+	--arch amd64 \
+	--config aosc-mainline.toml
 ```
 
 If you want to include additional packages, for example, add `network-base` and `systemd-base`:
 
 ```
-aoscbootstrap stable /root/aosc http://localhost/debs/ --arch=amd64 --config=aosc-mainline.toml --include="network-base systemd-base"
+aoscbootstrap \
+	--branch stable \
+	--target /root/aosc \
+	--mirror http://localhost/debs/ \
+	--arch amd64 \
+	--config aosc-mainline.toml \
+	--include "network-base systemd-base"
 ```
 
 If you want to include even more packages, it is recommended to list them in a separate file like this:
@@ -48,14 +67,20 @@ editor-base
 Assume you have saved the file as `base.lst`, then you can use AOSCBootstrap like this:
 
 ```
-aoscbootstrap stable /root/aosc http://localhost/debs/ --arch=amd64 --config=aosc-mainline.toml --include-files=base.lst
+aoscbootstrap \
+	--branch stable \
+	--target /root/aosc \
+	--mirror http://localhost/debs/ \
+	--arch amd64 \
+	--config aosc-mainline.toml \
+	--include-files base.lst
 ```
 
 ### Additional Features
 
 - Clean up installations (`ciel factory-reset` equivalent): `-x`
 - Run additional scripts **after** cleaning up (if any): `-s <script>`
-- Compress a `.tar.xz` tarball: `--export-tar <path/to/tarball>`
+- Compress a `.tar.xz` tarball: `--export-tar-xz <path/to/tarball>`, same goes for `--export-tar-gz` and `--export-squashfs`
 - Only runs up until Stage 1 (base filesystem): `-1`
 
 ### Using Recipes from `CIEL!`
