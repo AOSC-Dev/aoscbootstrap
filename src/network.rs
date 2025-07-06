@@ -56,11 +56,11 @@ pub fn fetch_url(client: &Client, url: &str, path: &Path) -> Result<()> {
 }
 
 #[inline]
-fn combination<'a, 'b>(a: &'a [&str], b: &'b [String]) -> Vec<(&'a str, &'b str)> {
+fn combination<'a, 'b>(a: &'a [&str], b: &'b [&'b str]) -> Vec<(&'a str, &'b str)> {
     let mut ret = Vec::new();
     for i in a {
         for j in b {
-            ret.push((*i, j.as_str()));
+            ret.push((*i, *j));
         }
     }
 
@@ -73,7 +73,7 @@ pub fn fetch_manifests(
     branch: &str,
     topics: &[String],
     arches: &[&str],
-    comps: Vec<String>,
+    comps: &[&str],
     root: &Path,
 ) -> Result<Vec<String>> {
     let manifests = Arc::new(Mutex::new(Vec::new()));
