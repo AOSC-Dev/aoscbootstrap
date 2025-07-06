@@ -208,6 +208,7 @@ fn do_stage1(
     st: solv::Transaction,
     target_path: &Path,
     args: &Args,
+    m: &Manifests,
     archive_path: std::path::PathBuf,
     all_packages: Vec<PackageMeta>,
     topics: Vec<Topic>,
@@ -216,19 +217,24 @@ fn do_stage1(
     let stub_install = st.create_metadata()?;
     eprintln!("Stage 1: Creating filesystem skeleton ...");
     std::fs::create_dir_all(target_path.join("dev"))?;
-    if let Some((mirror, branch)) = args.mirror.as_ref().zip(args.branch.as_ref()) {
-        fs::bootstrap_apt(
-            target_path,
-            fs::MirrorOrSourceList::Mirror { mirror, branch },
-        )
-        .context("when preparing apt files")?;
-    } else {
-        fs::bootstrap_apt(
-            target_path,
-            fs::MirrorOrSourceList::SourceList(args.sources_list.as_ref().unwrap()),
-        )
-        .context("when preparing apt files")?;
+
+    match m {
+        Manifests::Single { mirror, branch, .. } => {
+            fs::bootstrap_apt(
+                target_path,
+                fs::MirrorOrSourceList::Mirror { mirror, branch },
+            )
+            .context("when preparing apt files")?;
+        }
+        Manifests::List(_) => {
+            fs::bootstrap_apt(
+                target_path,
+                fs::MirrorOrSourceList::SourceList(args.sources_list.as_ref().unwrap()),
+            )
+            .context("when preparing apt files")?;
+        }
     }
+
     topics::save_topics(target_path, topics)?;
     install::extract_bootstrap_pack(target_path).context("when extracting base files")?;
     eprintln!("Stage 1: Extracting packages ...");
@@ -291,19 +297,26 @@ fn do_stage2(
     Ok(())
 }
 
-enum Manifests {
-    Single(Vec<String>),
+enum Manifests<'a> {
+    Single {
+        mirror: &'a str,
+        list: Vec<String>,
+        branch: &'a str,
+        _comps: &'a [&'a str],
+    },
     List(HashMap<String, String>),
 }
 
-impl Manifests {
+impl<'a> Manifests<'a> {
     fn paths(&self, target_path: &Path) -> Vec<PathBuf> {
         match self {
-            Manifests::Single(items) => items
+            Manifests::Single { list, .. } => list
                 .iter()
                 .map(|p| target_path.join("var/lib/apt/lists").join(p))
                 .collect(),
-            Manifests::List(hash_map) => hash_map.values().map(|p| target_path.join("var/lib/apt/lists").join(p))
+            Manifests::List(hash_map) => hash_map
+                .values()
+                .map(|p| target_path.join("var/lib/apt/lists").join(p))
                 .collect(),
         }
     }
@@ -367,13 +380,13 @@ fn main() {
         arches.push("all".to_string());
     }
 
-    let comps = if let Some(comps) = &args.comps {
-        let mut comps = comps.to_owned();
-        comps.push("main".to_string());
-        Some(comps)
-    } else {
-        None
-    };
+    let mut comps = vec![];
+
+    if let Some(c) = &args.comps {
+        comps.extend(c.iter().map(|x| x.as_str()));
+    }
+
+    comps.push("main");
 
     std::fs::create_dir_all(target_path.join("var/lib/apt/lists")).unwrap();
     std::fs::create_dir_all(&archive_path).unwrap();
@@ -398,18 +411,25 @@ fn main() {
             &arches,
             vec![path.to_path_buf()],
         )),
-        None => Manifests::Single(
-            network::fetch_manifests(
-                &client,
-                mirror.as_deref().unwrap_or(DEFAULT_MIRROR),
-                args.branch.as_deref().unwrap_or("stable"),
-                &topics,
-                &arches,
-                comps.unwrap_or_else(|| vec!["main".to_string()]),
-                target_path,
-            )
-            .unwrap(),
-        ),
+        None => {
+            let mirror = mirror.as_deref().unwrap_or(DEFAULT_MIRROR);
+            let branch = args.branch.as_deref().unwrap_or("stable");
+            Manifests::Single {
+                mirror,
+                branch,
+                _comps: &comps,
+                list: network::fetch_manifests(
+                    &client,
+                    mirror,
+                    branch,
+                    &topics,
+                    &arches,
+                    &comps,
+                    target_path,
+                )
+                .unwrap(),
+            }
+        }
     };
 
     let paths = manifests.paths(target_path);
@@ -435,16 +455,17 @@ fn main() {
     network::batch_download(
         &all_packages,
         &archive_path,
-        match manifests {
-            Manifests::Single(_) => {
-                Mirror::Single(args.mirror.as_deref().unwrap_or(DEFAULT_MIRROR))
-            }
+        match &manifests {
+            Manifests::Single { mirror, .. } => Mirror::Single(mirror),
             Manifests::List(hash_map) => Mirror::List(
                 SelectMirror::new(
                     hash_map
                         .into_iter()
                         .map(|(url, file_name)| {
-                            (url, target_path.join("var/lib/apt/lists").join(file_name))
+                            (
+                                url.to_string(),
+                                target_path.join("var/lib/apt/lists").join(file_name),
+                            )
                         })
                         .collect(),
                 )
@@ -467,11 +488,20 @@ fn main() {
         .expect("Did not find the main architecture");
     install::generate_apt_extended_state(target_path, &all_stages, &all_packages, main_arch)
         .expect("Unable to generate APT extended state");
-    let script =
-        match do_stage1(st, target_path, &args, archive_path, all_packages, filtered).unwrap() {
-            Some(value) => value,
-            None => return,
-        };
+    let script = match do_stage1(
+        st,
+        target_path,
+        &args,
+        &manifests,
+        archive_path,
+        all_packages,
+        filtered,
+    )
+    .unwrap()
+    {
+        Some(value) => value,
+        None => return,
+    };
 
     do_stage2(t, target_path, script, target, &args, threads).unwrap();
 }
