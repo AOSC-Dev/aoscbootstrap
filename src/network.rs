@@ -79,13 +79,11 @@ pub fn fetch_manifests(
     let manifests = Arc::new(Mutex::new(Vec::new()));
     let manifests_clone = manifests.clone();
     let manifests_clone_2 = manifests.clone();
-    let combined = combination(arches, &comps);
+    let combined = combination(arches, comps);
     combined
         .par_iter()
         .try_for_each(move |(arch, comp)| -> Result<()> {
-            let url = format!(
-                "{mirror}/dists/{branch}/{comp}/binary-{arch}/Packages"
-            );
+            let url = format!("{mirror}/dists/{branch}/{comp}/binary-{arch}/Packages");
             let parsed = Url::parse(&url)?;
             let manifest_name = parsed.host_str().unwrap_or_default().to_string() + parsed.path();
             let manifest_name = manifest_name.replace('/', "_");

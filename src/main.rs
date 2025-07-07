@@ -460,7 +460,7 @@ fn main() {
             Manifests::List(hash_map) => Mirror::List(
                 SelectMirror::new(
                     hash_map
-                        .into_iter()
+                        .iter()
                         .map(|(url, file_name)| {
                             (
                                 url.to_string(),
