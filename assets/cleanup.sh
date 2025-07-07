@@ -10,7 +10,6 @@ WHITELIST="^/efi
 ^/var/lib/atm/state
 ^/var/lib/dkms
 ^/var/lib/dpkg
-^/var/log/journal$
 ^/usr/lib/locale/locale-archive
 ^/root
 ^/home
