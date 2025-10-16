@@ -41,6 +41,8 @@ WHITELIST="^/efi
     echo -e '\e[1mRemoving sensitive files ...\e[0m'
     rm -fv /etc/machine-id
     rm -fv /etc/ssh/ssh_host_*_key*
+    echo -e '\e[1mResetting machine-id ...'
+    echo 'uninitialized' > /etc/machine-id
 }
 
 set -eo pipefail
