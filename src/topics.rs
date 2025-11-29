@@ -97,7 +97,7 @@ pub fn save_topics(sysroot: &Path, topics: Vec<Topic>) -> Result<()> {
     eprintln!("{}", "Saving topic sources ...".bold().cyan());
     let content = topic_sources
         .into_iter()
-        .map(|x| (x + "\n"))
+        .map(|x| x + "\n")
         .collect::<String>();
     let buf = content.as_bytes();
     let mut writer = File::create(atm_list_path)?;

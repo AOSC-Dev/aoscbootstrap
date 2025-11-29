@@ -283,7 +283,7 @@ pub fn get_tar_dir_size(
     hardlinks: bool,
     record_size: u64,
 ) -> Result<u64> {
-    if record_size < BLOCK_SIZE || record_size % BLOCK_SIZE != 0 {
+    if record_size < BLOCK_SIZE || !record_size.is_multiple_of(BLOCK_SIZE) {
         bail!("Record size must be a multiple of {}", BLOCK_SIZE);
     }
     // A hashmap with inode numbers as the key. Used to detect hard links.
