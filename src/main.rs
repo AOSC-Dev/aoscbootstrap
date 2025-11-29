@@ -27,7 +27,7 @@ use std::{
 };
 use topics::{Topic, fetch_topics, filter_topics};
 
-const DEFAULT_MIRROR: &str = "https://repo.aosc.io/debs";
+const DEFAULT_MIRROR: &str = "https://repo.aosc.io/anthon/debs";
 
 #[derive(Parser, Debug)]
 #[clap(about, version, author)]

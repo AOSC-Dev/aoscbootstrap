@@ -31,7 +31,7 @@ aoscbootstrap \
 	--branch ${BRANCH:-stable} \
 	--comps ${COMPS:-main} \
 	--target emukit \
-	--mirror ${REPO:-https://repo.aosc.io/debs} \
+	--mirror ${REPO:-https://repo.aosc.io/anthon/debs} \
 	--config /usr/share/aoscbootstrap/config/aosc-mainline.toml \
 	-x \
 	--arch ${ARCH:-$(dpkg --print-architecture)} \

@@ -40,7 +40,7 @@ for i in $@; do
 					--branch ${BRANCH:-stable} \
 					--comps ${COMPS:-main} \
 					--target $i \
-					--mirror ${REPO:-https://repo.aosc.io/debs} \
+					--mirror ${REPO:-https://repo.aosc.io/anthon/debs} \
 					--config /usr/share/aoscbootstrap/config/aosc-mainline.toml \
 					-x \
 					--arch ${ARCH:-$(dpkg --print-architecture)} \
@@ -61,7 +61,7 @@ for i in $@; do
 					--branch ${BRANCH:-stable} \
 					--comps ${COMPS:-main} \
 					--target $i \
-					--mirror ${REPO:-https://repo.aosc.io/debs} \
+					--mirror ${REPO:-https://repo.aosc.io/anthon/debs} \
 					--config /usr/share/aoscbootstrap/config/aosc-mainline.toml \
 					-x \
 					--arch ${ARCH:-$(dpkg --print-architecture)} \
@@ -78,7 +78,7 @@ for i in $@; do
 				--branch ${ARCH:-$(dpkg --print-architecture)}-bring-up \
 				--target $i \
 				--comps ${COMPS:-main} \
-				--mirror ${REPO:-https://repo.aosc.io/debs} \
+				--mirror ${REPO:-https://repo.aosc.io/anthon/debs} \
 				--config /usr/share/aoscbootstrap/config/aosc-mainline.toml \
 				-x \
 				--arch ${ARCH:-$(dpkg --print-architecture)} \
@@ -100,7 +100,7 @@ for i in $@; do
 					--branch ${BRANCH:-stable} \
 					--target $i \
 					--comps ${COMPS:-main} \
-					--mirror ${REPO:-https://repo.aosc.io/debs-retro} \
+					--mirror ${REPO:-https://repo.aosc.io/anthon/debs-retro} \
 					--config /usr/share/aoscbootstrap/config/aosc-retro.toml \
 					-x \
 					--arch ${ARCH:-$(dpkg --print-architecture)} \
@@ -115,7 +115,7 @@ for i in $@; do
 				--branch ${ARCH:-$(dpkg --print-architecture)}-bring-up \
 				--target $i \
 				--comps ${COMPS:-main} \
-				--mirror ${REPO:-https://repo.aosc.io/debs-retro} \
+				--mirror ${REPO:-https://repo.aosc.io/anthon/debs-retro} \
 				--config /usr/share/aoscbootstrap/config/aosc-retro.toml \
 				-x \
 				--arch ${ARCH:-$(dpkg --print-architecture)} \
