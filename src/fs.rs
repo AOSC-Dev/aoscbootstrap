@@ -4,7 +4,7 @@ use flate2::write::GzEncoder;
 use indicatif::{ProgressBar, ProgressDrawTarget, ProgressStyle};
 use liblzma::stream::{Filters, LzmaOptions, MtStreamBuilder, Stream};
 use liblzma::write::XzEncoder;
-use nix::fcntl::{OFlag, open};
+use nix::fcntl::{AT_FDCWD, OFlag, open};
 use nix::sys::stat::{FchmodatFlags, Mode, fchmodat};
 use nix::unistd::{close, sync};
 use sha2::{Digest, Sha256};
@@ -60,14 +60,14 @@ pub fn bootstrap_apt(root: &Path, m: MirrorOrSourceList<'_>) -> Result<()> {
     .ok();
     // chmod 0000 /etc/shadow
     fchmodat(
-        None,
+        AT_FDCWD,
         &root.join("etc/shadow"),
         Mode::empty(),
         FchmodatFlags::NoFollowSymlink,
     )?;
     // chmod 0644 /etc/apt/sources.list
     fchmodat(
-        None,
+        AT_FDCWD,
         &root.join("etc/apt/sources.list"),
         Mode::from_bits_truncate(0o644),
         FchmodatFlags::NoFollowSymlink,

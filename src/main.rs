@@ -345,6 +345,11 @@ fn main() {
     let config = install::read_config(config_path)
         .context(format!("when reading configuration file '{config_path}'"))
         .unwrap();
+
+    rustls::crypto::ring::default_provider()
+        .install_default()
+        .expect("Failed to install rustls crypto provider");
+
     let client = network::make_new_client().unwrap();
     let target_path = Path::new(target);
     let force = args.force;
@@ -390,6 +395,7 @@ fn main() {
 
     std::fs::create_dir_all(target_path.join("var/lib/apt/lists")).unwrap();
     std::fs::create_dir_all(&archive_path).unwrap();
+
     eprintln!("Downloading manifests ...");
     let arches = arches.iter().map(|a| a.as_str()).collect::<Vec<_>>();
 
@@ -527,9 +533,8 @@ fn fetch_manifest_from_sources_list(
         .download_dir(lists.to_path_buf())
         .arch(arches.iter().find(|a| **a != "all").unwrap().to_string())
         .client(&client)
-        .manifest_config(vec![map])
+        .manifest_config(vec![("".to_string(), map)])
         .source("/".into())
-        .topic_msg("")
         .sources_lists_paths(paths)
         .build()
         .start_blocking(async |e| {
