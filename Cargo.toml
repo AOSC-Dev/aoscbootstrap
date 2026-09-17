@@ -24,10 +24,10 @@ tar = "0.4.45"
 clap = { version = "^4.6.0", features = ["derive"] }
 anyhow = "1.0.102"
 nix = { version = "0.31", features = ["fs", "user"] }
-sha2 = "0.10.0"
+sha2 = "0.11.0"
 rayon = "1.11.0"
 libloading = "0.9.0"
-libsolv-sys = "0.1.4"
+libsolv-sys = { git = "https://github.com/AOSC-Dev/abbs-meta-rs", rev = "9bf35be3a29d7616e3a7a9ee84eb81326fba456a" }
 url = "2.5.8"
 faster-hex = "0.10.0"
 tempfile = "3.27.0"
@@ -38,7 +38,7 @@ owo-colors = "^4.3.0"
 flate2 = "1.1.9"
 oma-debcontrol = "0.3.1"
 oma-repo-verify = "0.10.0"
-zstd = "0.13.3"
+zstd = "0.14"
 serde_json = "1.0.149"
 libaosc = { version = "0.4.0", default-features = false, features = [
     "arch",
@@ -46,13 +46,13 @@ libaosc = { version = "0.4.0", default-features = false, features = [
 ] }
 indicatif = "0.18.4"
 walkdir = "2.5.0"
-oma-refresh = { version = "0.54.4", default-features = false, features = [
+oma-refresh = { version = "0.56.3", default-features = false, features = [
     "sequoia-nettle-backend",
     "rustls",
-    "blocking",
 ] }
 liblzma = { version = "0.4.6", features = ["parallel"] }
-oma-fetch = "0.36.2"
+oma-fetch = "0.39"
+digest-io = "0.1"
 
 [profile.release]
 lto = true

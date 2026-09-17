@@ -16,6 +16,7 @@ pub const SOLVER_FLAG_BEST_OBEY_POLICY: c_int = 12;
 
 pub struct Pool {
     pool: *mut ffi::Pool,
+    whatprovides_created: bool,
 }
 
 macro_rules! cstr {
@@ -25,11 +26,12 @@ macro_rules! cstr {
 }
 
 #[inline]
-fn solvable_to_meta(s: *mut ffi::Solvable) -> Result<PackageMeta> {
+fn solvable_to_meta(pool: *mut ffi::Pool, solvable: ffi::Id) -> Result<PackageMeta> {
     let mut sum_type: ffi::Id = 0;
     let checksum = unsafe {
-        ffi::solvable_lookup_bin_checksum(
-            s,
+        ffi::pool_lookup_bin_checksum(
+            pool,
+            solvable,
             ffi::solv_knownid_SOLVABLE_CHECKSUM as i32,
             &mut sum_type,
         )
@@ -39,32 +41,37 @@ fn solvable_to_meta(s: *mut ffi::Solvable) -> Result<PackageMeta> {
     }
     let checksum = unsafe { slice::from_raw_parts(checksum, 32) };
     let name = unsafe {
-        CStr::from_ptr(ffi::solvable_lookup_str(
-            s,
+        CStr::from_ptr(ffi::pool_lookup_str(
+            pool,
+            solvable,
             ffi::solv_knownid_SOLVABLE_NAME as i32,
         ))
     };
     let version = unsafe {
-        CStr::from_ptr(ffi::solvable_lookup_str(
-            s,
+        CStr::from_ptr(ffi::pool_lookup_str(
+            pool,
+            solvable,
             ffi::solv_knownid_SOLVABLE_EVR as i32,
         ))
     };
     let path = unsafe {
-        CStr::from_ptr(ffi::solvable_lookup_str(
-            s,
+        CStr::from_ptr(ffi::pool_lookup_str(
+            pool,
+            solvable,
             ffi::solv_knownid_SOLVABLE_MEDIADIR as i32,
         ))
     };
     let filename = unsafe {
-        CStr::from_ptr(ffi::solvable_lookup_str(
-            s,
+        CStr::from_ptr(ffi::pool_lookup_str(
+            pool,
+            solvable,
             ffi::solv_knownid_SOLVABLE_MEDIAFILE as i32,
         ))
     };
     let arch = unsafe {
-        CStr::from_ptr(ffi::solvable_lookup_str(
-            s,
+        CStr::from_ptr(ffi::pool_lookup_str(
+            pool,
+            solvable,
             ffi::solv_knownid_SOLVABLE_ARCH as i32,
         ))
     };
@@ -84,11 +91,12 @@ impl Pool {
     pub fn new() -> Pool {
         Pool {
             pool: unsafe { ffi::pool_create() },
+            whatprovides_created: false,
         }
     }
 
     pub fn match_package(&self, name: &str, mut queue: Queue) -> Result<Queue> {
-        if unsafe { (*self.pool).whatprovides.is_null() } {
+        if !self.whatprovides_created {
             // we can't call createwhatprovides here because of how libsolv manages internal states
             return Err(anyhow!(
                 "internal error: `createwhatprovides` needs to be called first."
@@ -108,6 +116,7 @@ impl Pool {
 
     pub fn createwhatprovides(&mut self) {
         unsafe { ffi::pool_createwhatprovides(self.pool) }
+        self.whatprovides_created = true;
     }
 }
 
@@ -198,7 +207,7 @@ impl Transaction {
             for i in 0..((*self.t).steps.count) {
                 let p = *steps.offset(i as isize);
                 let pool = (*self.t).pool;
-                results.push(solvable_to_meta((*pool).solvables.offset(p as isize))?);
+                results.push(solvable_to_meta(pool, p)?);
             }
         }
 
