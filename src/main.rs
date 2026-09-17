@@ -532,12 +532,12 @@ fn fetch_manifest_from_sources_list(
     let success_list = OmaRefresh::builder()
         .download_dir(lists.to_path_buf())
         .arch(arches.iter().find(|a| **a != "all").unwrap().to_string())
-        .client(&client)
+        .client(client.into())
         .manifest_config(vec![("".to_string(), map)])
         .source("/".into())
         .sources_lists_paths(paths)
         .build()
-        .start_blocking(async |e| {
+        .start(|e| {
             if let oma_refresh::db::Event::DownloadEvent(Event::Failed { file_name, error }) = e {
                 eprintln!("Download file {file_name} with error: {error}");
             }

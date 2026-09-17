@@ -1,4 +1,6 @@
 use anyhow::{Result, anyhow};
+use digest_io::IoWrapper;
+use faster_hex::hex_string;
 use flate2::Compression;
 use flate2::write::GzEncoder;
 use indicatif::{ProgressBar, ProgressDrawTarget, ProgressStyle};
@@ -167,8 +169,7 @@ fn build_xz_encoder(threads: u32) -> Result<Stream> {
 
 /// Calculate the Sha256 checksum of the given stream
 pub fn sha256sum<R: Read>(mut reader: R) -> Result<String> {
-    let mut hasher = Sha256::new();
+    let mut hasher = IoWrapper(Sha256::new());
     std::io::copy(&mut reader, &mut hasher)?;
-
-    Ok(format!("{:x}", hasher.finalize()))
+    Ok(hex_string(&hasher.0.finalize()))
 }
