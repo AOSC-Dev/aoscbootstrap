@@ -297,7 +297,7 @@ pub fn get_tar_dir_size(
     let cwd = current_dir()?;
     set_current_dir(root).context(format!(
         "Can not chdir() into system root {}.",
-        &cwd.display()
+        cwd.display()
     ))?;
     // We start with . to walk through the system root.
     let walkdir = WalkDir::new(".")
@@ -314,7 +314,7 @@ pub fn get_tar_dir_size(
 
     set_current_dir(&cwd).context(format!(
         "Can not chdir() into the previous work directory '{}.",
-        &cwd.display()
+        cwd.display()
     ))?;
     // GNU tar has 1024 bytes of zeros as the EOF marker.
     let total_size_in_bytes = total_size_in_blks * BLOCK_SIZE + 1024;

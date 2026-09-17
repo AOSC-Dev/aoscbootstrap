@@ -180,7 +180,7 @@ fn include_extra_scripts<W: Write>(
         output.write_all(b"\necho 'Running additional scripts ...';")?;
         for s in scripts {
             let mut f = File::open(s)?;
-            output.write_all(format!("\n# === {}\n", &s).as_bytes())?;
+            output.write_all(format!("\n# === {}\n", s).as_bytes())?;
             std::io::copy(&mut f, output)?;
         }
     }

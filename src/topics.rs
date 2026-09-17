@@ -78,11 +78,11 @@ pub fn save_topics(sysroot: &Path, topics: Vec<Topic>) -> Result<()> {
     atm_state_path.push(ATM_STATE);
     let atm_list_parent = atm_list_path.parent().ok_or(anyhow!(
         "Failed to get parent path of {:#?}",
-        &atm_list_path
+        atm_list_path
     ))?;
     let atm_state_parent = atm_state_path.parent().ok_or(anyhow!(
         "Failed to get parent path of {:#?}",
-        &atm_state_path
+        atm_state_path
     ))?;
     create_dir_all(atm_list_parent)?;
     create_dir_all(atm_state_parent)?;
