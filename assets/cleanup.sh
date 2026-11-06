@@ -42,7 +42,7 @@ WHITELIST="^/efi
     rm -fv /etc/machine-id
     rm -fv /etc/ssh/ssh_host_*_key*
     echo -e '\e[1mResetting machine-id ...'
-    echo 'uninitialized' > /etc/machine-ida
+    echo 'uninitialized' > /etc/machine-id
     if ! mount | grep -q /etc/resolv.conf &>/dev/null ; then
         echo -e '\e[1mREsetting resolv.conf ...'
         echo "# Refer to manual page resolv.conf(5) for details." > /etc/resolv.conf
